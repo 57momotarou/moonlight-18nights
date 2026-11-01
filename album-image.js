@@ -280,26 +280,44 @@ function imgFrame(ctx, W, H, id) {
       imgSparkle(ctx, x + dx * 48, y + dy * 48, 7);
     });
     // 飾り線（中央から左右へ細くなる）
-    const flourish = (y, len) => {
+    const flourish = (y, len, gap = 26) => {
       for (const sgn of [-1, 1]) {
-        const g2 = ctx.createLinearGradient(W / 2 + sgn * 26, 0, W / 2 + sgn * (26 + len), 0);
+        const g2 = ctx.createLinearGradient(W / 2 + sgn * gap, 0, W / 2 + sgn * (gap + len), 0);
         g2.addColorStop(0, "rgba(243,223,168,.95)");
         g2.addColorStop(1, "rgba(243,223,168,0)");
         ctx.strokeStyle = g2; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(W / 2 + sgn * 26, y); ctx.lineTo(W / 2 + sgn * (26 + len), y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(W / 2 + sgn * gap, y); ctx.lineTo(W / 2 + sgn * (gap + len), y); ctx.stroke();
         ctx.fillStyle = "rgba(243,223,168,.9)";
-        ctx.beginPath(); ctx.arc(W / 2 + sgn * 36, y, 2.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(W / 2 + sgn * (gap + 10), y, 2.2, 0, Math.PI * 2); ctx.fill();
       }
     };
-    const topY = inner + 24;
-    flourish(topY, 150);
-    const mg = ctx.createRadialGradient(W / 2 - 4, topY - 4, 1, W / 2, topY, 13);
-    mg.addColorStop(0, "#fffaf0"); mg.addColorStop(1, "#ead9a6");
-    ctx.save();
-    ctx.shadowColor = "rgba(255,244,205,.95)"; ctx.shadowBlur = 22;
-    ctx.fillStyle = mg;
-    ctx.beginPath(); ctx.arc(W / 2, topY, 13, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+    // 上中央：月の満ち欠けの並び（三日月→半月→十三夜→満月→…→三日月）
+    const topY = inner + 26;
+    flourish(topY, 150, 96);
+    const phases = [0.2, 0.5, 0.8, 1, 0.8, 0.5, 0.2];
+    const sizes = [5, 6, 7, 9.5, 7, 6, 5];
+    let x = W / 2 - (sizes.reduce((t, r) => t + r * 2, 0) + 9 * (phases.length - 1)) / 2;
+    phases.forEach((f, i) => {
+      const r = sizes[i];
+      x += r;
+      const flip = i > 3;  // 右側は欠ける向きを反対に（左右対称）
+      ctx.save();
+      ctx.translate(x, topY);
+      if (flip) ctx.scale(-1, 1);
+      ctx.strokeStyle = "rgba(243,223,168,.85)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = f >= 1 ? gold : "#f3dfa8";
+      ctx.beginPath();
+      if (f >= 1) ctx.arc(0, 0, r, 0, Math.PI * 2);
+      else {
+        const rx = Math.abs(1 - 2 * f) * r;
+        ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
+        ctx.ellipse(0, 0, rx, r, 0, Math.PI / 2, -Math.PI / 2, f < 0.5);
+      }
+      ctx.fill();
+      ctx.restore();
+      x += r + 9;
+    });
     const botY = H - inner - 14;
     flourish(botY, 110);
     ctx.fillStyle = "#f8e7b0";
