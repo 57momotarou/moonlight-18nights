@@ -227,3 +227,5 @@ button.pair-card{width:100%;color:inherit;font:inherit;cursor:pointer;text-align
 .tonight-note{display:inline-block;margin:0 0 12px;padding:6px 12px;border-radius:999px;background:rgba(143,182,255,.12);color:#cfe0ff;font-size:13px}
 .mystery .dome.got{background:radial-gradient(circle at 50% 40%,#22325c,#0d1530);border-color:rgba(214,179,101,.6);overflow:hidden;padding:4px}
 .mystery .dome.got img{width:100%;height:100%;object-fit:contain}
+.mystery .dome.got.reveal img{animation:reveal 1.1s cubic-bezier(.22,1,.36,1) both}
+#tonightRevealBtn{margin-top:8px;animation:glow 2.4s ease-in-out infinite}

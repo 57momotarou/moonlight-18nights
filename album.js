@@ -141,24 +141,49 @@ function renderSky() {
 }
 
 // 「今夜のケーキ」欄：今夜買った（記録された）人がアルバムを開いているときだけ、？がケーキに変わる
-function renderTonightCard() {
+// 「今夜のケーキ」欄：今夜買った（記録された）人には「今夜のケーキを見る」ボタン。押すと？がケーキに変わる（図鑑の開封と同じ扱い）
+function renderTonightCard(reveal = false) {
   const t = album && album.tonight;
   const dome = document.querySelector("#tonightCard .dome");
-  if (t) {
-    dome.classList.add("got");
-    if (dome.dataset.night !== String(t.night)) {
-      dome.dataset.night = String(t.night);
-      dome.innerHTML = `<img data-cake-night="${t.night}" alt="${cakeEsc(t.cake)}">`;
-      cakeHydrateImages(dome);
+  const btn = $("tonightRevealBtn");
+  if (!t) {
+    btn.classList.add("hidden");
+    if (dome.classList.contains("got") || dome.dataset.night) {
+      dome.classList.remove("got", "reveal");
+      dome.dataset.night = "";
+      dome.textContent = "？";
+      renderSky();
     }
-    $("tonightTitle").textContent = t.cake;
-    $("tonightText").textContent = `＋ ${t.drink}　今夜のケーキセットがアルバムに入りました。`;
-  } else if (dome.classList.contains("got")) {
+    return;
+  }
+  const opened = getSeen().has(t.night);
+  if (!opened) {
     dome.classList.remove("got");
     dome.dataset.night = "";
     dome.textContent = "？";
-    renderSky();
+    $("tonightTitle").textContent = "今夜のケーキセットが届いています";
+    $("tonightText").textContent = "ボタンを押して、今夜のケーキを見てみましょう。";
+    btn.classList.remove("hidden");
+    return;
   }
+  btn.classList.add("hidden");
+  dome.classList.add("got");
+  dome.classList.toggle("reveal", reveal);
+  if (dome.dataset.night !== String(t.night)) {
+    dome.dataset.night = String(t.night);
+    dome.innerHTML = `<img data-cake-night="${t.night}" alt="${cakeEsc(t.cake)}">`;
+    cakeHydrateImages(dome);
+  }
+  $("tonightTitle").textContent = t.cake;
+  $("tonightText").textContent = `＋ ${t.drink}　今夜のケーキセットがアルバムに入りました。`;
+}
+
+function revealTonight() {
+  const t = album && album.tonight;
+  if (!t) return;
+  markSeen(t.night);
+  renderTonightCard(true);
+  renderAlbum();
 }
 
 async function loadPublic() {
@@ -436,7 +461,7 @@ function openSavePanel(n) {
   const v = album.visits.find((x) => x.night === n);
   saveState = {
     night: n,
-    names: [{ name: album.name, on: true }, ...v.together.map((name) => ({ name, on: true }))],
+    names: [{ name: album.name, on: false }, ...v.together.map((name) => ({ name, on: true }))],
     frame: currentFrame(),
     shooting: Boolean(v.streak),
     timer: null
@@ -654,6 +679,7 @@ function start() {
     if (e.target.id === "newNameInput" && e.key === "Enter" && !e.isComposing) { e.preventDefault(); sendNameRequest(); }
   });
   $("nameReq").addEventListener("click", (e) => { if (e.target.id === "nameFixBtn") showNameRequest(); });
+  $("tonightRevealBtn").addEventListener("click", revealTonight);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").classList.contains("hidden")) closeModal(); });
   $("closeBtn").addEventListener("click", closeAlbum);
   $("reloadBtn").addEventListener("click", async () => { await refresh(); toast("最新の状態にしました"); });

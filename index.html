@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=11">
+<link rel="stylesheet" href="album.css?v=12">
 </head>
 <body>
 <div class="bg-stars" id="bgStars" aria-hidden="true"></div>
@@ -51,6 +51,7 @@
       <div>
         <h2 id="tonightTitle">今夜のケーキは、お店でのお楽しみ</h2>
         <p class="small muted" id="tonightText">毎晩ちがうケーキセットが登場します。中身はMoonlightで頼んだ人だけのひみつ。</p>
+        <button class="btn sm hidden" type="button" id="tonightRevealBtn">今夜のケーキを見る</button>
       </div>
     </div>
   </section>
@@ -68,12 +69,12 @@
 
   <section class="card" id="aboutCard">
     <h2>最後の18夜を、Moonlightで</h2>
-    <p class="lead">11月1日から最終日の11月18日まで、毎晩ちがうケーキセットが登場します。<br>
+    <p class="lead">11月1日から最終日の11月18日まで、日替わりのケーキセットが登場します。<br>
     食べたケーキはあなたのアルバムに集まり、通うたびにあなたの月が満ちていきます。<br>
-    大切な人と一緒に来れば、ふたりだけの記念カード。<br>
-    みんなの一杯が星になって、Moonlightの夜空を灯します。<br>
+    大切な人と一緒に来店すると、ふたりだけの記念カードに。<br>
+    みんなの思いが星になって、Moonlightの夜空を灯します。<br>
     最終夜、みんなで灯した夜空に満月がのぼります。</p>
-    <p class="small muted" style="margin:12px 0 0">毎晩 20時ごろ〜 / ケーキセット $30,000 / 1晩につきスタンプは1つ</p>
+    <p class="small muted" style="margin:12px 0 0"> ケーキセット $30,000 / 同時回復 </p>
   </section>
 
   <!-- アルバム -->
@@ -165,8 +166,8 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=11"></script>
-<script src="album-image.js?v=11"></script>
-<script src="album.js?v=11"></script>
+<script src="cake-api.js?v=12"></script>
+<script src="album-image.js?v=12"></script>
+<script src="album.js?v=12"></script>
 </body>
 </html>

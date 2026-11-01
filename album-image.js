@@ -257,31 +257,53 @@ function imgFrame(ctx, W, H, id) {
     ctx.fillStyle = "#f8e7b0";
     for (const y of [m, H - m]) for (const dx of [-54, 0, 54]) imgStar(ctx, W / 2 + dx, y, dx ? 8 : 13);
   } else if (id === "full") {
-    ctx.shadowColor = "rgba(248,231,176,.6)";
-    ctx.shadowBlur = 24;
+    // 金の細い二重線・四隅の弧・上に小さく光る満月と飾り線（はみ出さない）
+    const inner = m + 11;
+    ctx.save();
+    ctx.shadowColor = "rgba(248,231,176,.55)";
+    ctx.shadowBlur = 14;
     ctx.strokeStyle = gold;
-    ctx.lineWidth = 9;
-    imgRoundRectPath(ctx, m + 2, m + 2, W - (m + 2) * 2, H - (m + 2) * 2, 18); ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = 2;
-    imgRoundRectPath(ctx, m + 20, m + 20, W - (m + 20) * 2, H - (m + 20) * 2, 12); ctx.stroke();
-    // 上下中央の満月のメダル（枠の上に乗せ、画像の外にはみ出さない）
-    for (const cy of [m + 2, H - m - 2]) {
-      const r = cy < H / 2 ? 24 : 16;
-      ctx.fillStyle = "#0b1226";
-      ctx.beginPath(); ctx.arc(W / 2, cy, r + 8, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = gold; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(W / 2, cy, r + 8, 0, Math.PI * 2); ctx.stroke();
-      const mg = ctx.createRadialGradient(W / 2 - r * 0.25, cy - r * 0.25, 2, W / 2, cy, r);
-      mg.addColorStop(0, "#fffaf0"); mg.addColorStop(1, "#e9d9a8");
-      ctx.shadowColor = "rgba(248,231,176,.9)"; ctx.shadowBlur = 18;
-      ctx.fillStyle = mg;
-      ctx.beginPath(); ctx.arc(W / 2, cy, r, 0, Math.PI * 2); ctx.fill();
-      ctx.shadowBlur = 0;
-    }
+    ctx.lineWidth = 3;
+    imgRoundRectPath(ctx, m, m, W - m * 2, H - m * 2, 10); ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.2;
+    imgRoundRectPath(ctx, inner, inner, W - inner * 2, H - inner * 2, 6); ctx.stroke();
+    // 四隅：内側に向かう同心の弧と小さな点
+    const cs = [[inner, inner, 0], [W - inner, inner, Math.PI / 2], [W - inner, H - inner, Math.PI], [inner, H - inner, Math.PI * 1.5]];
+    cs.forEach(([x, y, a]) => {
+      ctx.lineWidth = 1.2;
+      for (const r of [22, 34]) { ctx.beginPath(); ctx.arc(x, y, r, a, a + Math.PI / 2); ctx.stroke(); }
+      ctx.fillStyle = "#f8e7b0";
+      const dx = Math.cos(a + Math.PI / 4), dy = Math.sin(a + Math.PI / 4);
+      ctx.beginPath(); ctx.arc(x + dx * 14, y + dy * 14, 3, 0, Math.PI * 2); ctx.fill();
+      imgSparkle(ctx, x + dx * 48, y + dy * 48, 7);
+    });
+    // 飾り線（中央から左右へ細くなる）
+    const flourish = (y, len) => {
+      for (const sgn of [-1, 1]) {
+        const g2 = ctx.createLinearGradient(W / 2 + sgn * 26, 0, W / 2 + sgn * (26 + len), 0);
+        g2.addColorStop(0, "rgba(243,223,168,.95)");
+        g2.addColorStop(1, "rgba(243,223,168,0)");
+        ctx.strokeStyle = g2; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(W / 2 + sgn * 26, y); ctx.lineTo(W / 2 + sgn * (26 + len), y); ctx.stroke();
+        ctx.fillStyle = "rgba(243,223,168,.9)";
+        ctx.beginPath(); ctx.arc(W / 2 + sgn * 36, y, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+    const topY = inner + 24;
+    flourish(topY, 150);
+    const mg = ctx.createRadialGradient(W / 2 - 4, topY - 4, 1, W / 2, topY, 13);
+    mg.addColorStop(0, "#fffaf0"); mg.addColorStop(1, "#ead9a6");
+    ctx.save();
+    ctx.shadowColor = "rgba(255,244,205,.95)"; ctx.shadowBlur = 22;
+    ctx.fillStyle = mg;
+    ctx.beginPath(); ctx.arc(W / 2, topY, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    const botY = H - inner - 14;
+    flourish(botY, 110);
     ctx.fillStyle = "#f8e7b0";
-    corners(m + 10).forEach(([x, y]) => imgSparkle(ctx, x, y, 20));
-    for (const y of [m + 2, H - m - 2]) for (const dx of [-90, 90]) imgStar(ctx, W / 2 + dx, y, 9);
+    imgSparkle(ctx, W / 2, botY, 9);
   }
   ctx.restore();
 }
