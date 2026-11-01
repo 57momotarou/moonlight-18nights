@@ -129,15 +129,6 @@ function renderSky() {
 
   if (album && album.tonight) renderTonightCard();
 
-  if (Array.isArray(pub.names)) {
-    $("finalCard").classList.remove("hidden");
-    $("finalNames").innerHTML = pub.names.map((n) => `<span>${cakeEsc(n)}</span>`).join("") || '<span class="muted">まだいません</span>';
-    const msgs = pub.messages || [];
-    $("finalMessagesTitle").classList.toggle("hidden", !msgs.length);
-    $("finalMessages").innerHTML = msgs.map((m) => `<div><b>${cakeEsc(m.name)}</b>${cakeEsc(m.message)}</div>`).join("");
-  } else {
-    $("finalCard").classList.add("hidden");
-  }
 }
 
 // 「今夜のケーキ」欄：今夜買った（記録された）人がアルバムを開いているときだけ、？がケーキに変わる
@@ -302,11 +293,23 @@ function setTab(tab) {
   if (tab === "images") renderImagesTab();
 }
 
+// みんなの寄せ書き（最終夜から。アルバムを開いた人だけに届く）
+function renderAllMessages() {
+  const names = album && Array.isArray(album.names) ? album.names : null;
+  $("finalCard").classList.toggle("hidden", !names);
+  if (names) $("finalNames").innerHTML = names.map((n) => `<span>${cakeEsc(n)}</span>`).join("") || '<span class="muted">まだいません</span>';
+  const msgs = album && Array.isArray(album.messages) ? album.messages : null;
+  $("allMessagesCard").classList.toggle("hidden", !msgs);
+  if (!msgs) return;
+  $("allMessages").innerHTML = msgs.map((m) => `<div><b>${cakeEsc(m.name)}</b>${cakeEsc(m.message)}</div>`).join("")
+    || '<div class="small muted">まだ寄せ書きはありません</div>';
+}
+
 function renderMessageStatus() {
   const el = $("messageStatus");
   if (!album || !album.message) { el.textContent = ""; el.className = "small"; return; }
   const st = album.message_status;
-  const text = st === "hidden" ? "このひとことは公開されません" : "✓ 最終夜にみんなの寄せ書きとして公開されます";
+  const text = st === "hidden" ? "このひとことは公開されません" : "✓ 最終夜に、アルバムを持っている人だけが見られる寄せ書きとして公開されます";
   el.textContent = text;
   el.className = `small msg-${st === "hidden" ? "hidden" : "approved"}`;
 }
@@ -370,6 +373,7 @@ function renderAlbum() {
     updateCount();
   }
   renderMessageStatus();
+  renderAllMessages();
   renderTonightCard();
   cakeHydrateImages($("albumView"));
   if (activeTab === "images") renderImagesTab();
