@@ -361,9 +361,6 @@ function renderAlbum() {
       <div class="hint">${cakeEsc(t.hint)}</div>
       <div class="small muted" style="margin-top:6px">正体は、明日の夜Moonlightで。</div></div>`;
     $("teaserCard").classList.remove("hidden");
-  } else if (a.night >= 1 && a.night < total) {
-    $("teaser").innerHTML = `<div class="small muted">今夜ケーキセットを頼むと、明日のケーキのヒントがここに届きます。</div>`;
-    $("teaserCard").classList.remove("hidden");
   } else {
     $("teaserCard").classList.add("hidden");
   }
