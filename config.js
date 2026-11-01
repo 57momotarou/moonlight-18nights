@@ -3,6 +3,6 @@
 //   publishableKey … Supabase の Publishable key（sb_publishable_〜）
 // Secret key / service_role は絶対に入れないでください。
 window.MOONLIGHT_ALBUM_CONFIG = {
-  supabaseUrl: "https://yperlmuowsordikegqro.supabase.co",
-  publishableKey: "sb_publishable_fLmNXb5Mg5MMJ1cfVno0jw_eJPbxh9m"
+  supabaseUrl: "",
+  publishableKey: ""
 };
