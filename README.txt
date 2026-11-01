@@ -23,4 +23,3 @@
 ■ データ
   Supabase の cake_* テーブル（SQL は yuzucity/docs/supabase/moonlight_cake_album.sql）。
   管理（寄せ書き・記録・名前変更の承認など）は Windows版の「18夜の月」で行います。
-

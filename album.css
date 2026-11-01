@@ -225,3 +225,5 @@ button.pair-card{width:100%;color:inherit;font:inherit;cursor:pointer;text-align
 .name-req{font-size:12px;color:var(--warn);margin-top:2px}
 .linklike.small{font-size:12px}
 .tonight-note{display:inline-block;margin:0 0 12px;padding:6px 12px;border-radius:999px;background:rgba(143,182,255,.12);color:#cfe0ff;font-size:13px}
+.mystery .dome.got{background:radial-gradient(circle at 50% 40%,#22325c,#0d1530);border-color:rgba(214,179,101,.6);overflow:hidden;padding:4px}
+.mystery .dome.got img{width:100%;height:100%;object-fit:contain}

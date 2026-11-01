@@ -127,6 +127,8 @@ function renderSky() {
     $("tonightText").textContent = "中身はMoonlightでケーキセットを頼んだ人だけのひみつです。";
   }
 
+  if (album && album.tonight) renderTonightCard();
+
   if (Array.isArray(pub.names)) {
     $("finalCard").classList.remove("hidden");
     $("finalNames").innerHTML = pub.names.map((n) => `<span>${cakeEsc(n)}</span>`).join("") || '<span class="muted">まだいません</span>';
@@ -135,6 +137,27 @@ function renderSky() {
     $("finalMessages").innerHTML = msgs.map((m) => `<div><b>${cakeEsc(m.name)}</b>${cakeEsc(m.message)}</div>`).join("");
   } else {
     $("finalCard").classList.add("hidden");
+  }
+}
+
+// 「今夜のケーキ」欄：今夜買った（記録された）人がアルバムを開いているときだけ、？がケーキに変わる
+function renderTonightCard() {
+  const t = album && album.tonight;
+  const dome = document.querySelector("#tonightCard .dome");
+  if (t) {
+    dome.classList.add("got");
+    if (dome.dataset.night !== String(t.night)) {
+      dome.dataset.night = String(t.night);
+      dome.innerHTML = `<img data-cake-night="${t.night}" alt="${cakeEsc(t.cake)}">`;
+      cakeHydrateImages(dome);
+    }
+    $("tonightTitle").textContent = t.cake;
+    $("tonightText").textContent = `＋ ${t.drink}　今夜のケーキセットがアルバムに入りました。`;
+  } else if (dome.classList.contains("got")) {
+    dome.classList.remove("got");
+    dome.dataset.night = "";
+    dome.textContent = "？";
+    renderSky();
   }
 }
 
@@ -290,7 +313,7 @@ function renderAlbum() {
       html += `<button class="tile got${v.together.length ? " pair" : ""}${v.streak ? " streak" : ""}${finalCls}" data-show="${n}" type="button"><span class="n">${date}</span>
         <img data-cake-night="${v.night}" alt=""><span class="t">${cakeEsc(v.cake)}</span></button>`;
     } else if (n === a.night) {
-      html += `<button type="button" class="tile today${finalCls}" data-tonight="1"><span class="n">${date}</span>今夜の<br>ケーキを見る</button>`;
+      html += `<div class="tile today${finalCls}"><span class="n">${date}</span>今夜<br>？</div>`;
     } else if (n < a.night) {
       html += `<div class="tile passed${finalCls}"><span class="n">${date}</span>🌫<br>夜空の向こう</div>`;
     } else {
@@ -325,6 +348,7 @@ function renderAlbum() {
     updateCount();
   }
   renderMessageStatus();
+  renderTonightCard();
   cakeHydrateImages($("albumView"));
   if (activeTab === "images") renderImagesTab();
 }
@@ -524,6 +548,7 @@ function closeAlbum() {
   code = "";
   cakeStore(CODE_KEY, null);
   $("albumView").classList.add("hidden");
+  renderTonightCard();
   setTab("collection");
   $("certBody").innerHTML = "";
   $("openCard").classList.remove("hidden");
@@ -584,7 +609,6 @@ function start() {
   $("grid").addEventListener("click", (e) => {
     const open = e.target.closest("[data-open]");
     const show = e.target.closest("[data-show]");
-    if (e.target.closest("[data-tonight]")) return showTonight();
     if (open) showCard(Number(open.dataset.open), true);
     else if (show) showCard(Number(show.dataset.show), false);
   });
