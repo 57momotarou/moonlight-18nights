@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=18">
+<link rel="stylesheet" href="album.css?v=20">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -24,22 +24,30 @@
     <label>テストの「今夜」<select id="testNightSelect"></select></label>
   </div>
 
-  <!-- 合言葉と受け付ける人 -->
+  <!-- ① 合言葉 -->
   <section class="card" id="loginCard">
     <h2>受付をはじめる</h2>
     <form id="loginForm" autocomplete="off">
       <div class="field">
-        <label for="staffSelect">受け付ける人（従業員管理の在籍中の従業員）</label>
-        <select id="staffSelect" class="night-select"><option value="">読み込み中…</option></select>
-        <input type="text" id="staffInput" maxlength="30" class="hidden" placeholder="名前を入力" style="margin-top:8px">
-      </div>
-      <div class="field">
         <label for="passInput">合言葉</label>
         <input type="password" id="passInput" autocomplete="current-password">
       </div>
-      <button class="btn block" type="submit">はじめる</button>
+      <button class="btn block" type="submit">ログイン</button>
       <p class="error" id="loginError"></p>
     </form>
+  </section>
+
+  <!-- ② 自分の名前を選ぶ -->
+  <section class="card hidden" id="staffCard">
+    <h2>あなたはだれ？</h2>
+    <p class="small muted" style="margin:0 0 10px">受け付ける人（自分）を選んでください。従業員管理の在籍中の従業員です。</p>
+    <div class="staff-pick" id="staffPick"><div class="small muted">読み込み中…</div></div>
+    <form class="staff-manual" id="staffManualForm" autocomplete="off">
+      <input type="text" id="staffInput" maxlength="30" placeholder="一覧にない人は入力">
+      <button class="btn ghost sm" type="submit">この名前で</button>
+    </form>
+    <p class="error" id="staffError"></p>
+    <div class="row" style="margin-top:6px"><button class="linklike" type="button" id="staffLogoutBtn">ログアウト</button></div>
   </section>
 
   <!-- 受付 -->
@@ -87,7 +95,7 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=18"></script>
-<script src="staff.js?v=18"></script>
+<script src="cake-api.js?v=20"></script>
+<script src="staff.js?v=20"></script>
 </body>
 </html>

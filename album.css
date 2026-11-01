@@ -229,3 +229,12 @@ button.pair-card{width:100%;color:inherit;font:inherit;cursor:pointer;text-align
 .mystery .dome.got img{width:100%;height:100%;object-fit:contain}
 .mystery .dome.got.reveal img{animation:reveal 1.1s cubic-bezier(.22,1,.36,1) both}
 #tonightRevealBtn{margin-top:8px;animation:glow 2.4s ease-in-out infinite}
+
+/* 受付：自分の名前を選ぶ */
+.staff-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.staff-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 8px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text, #eef1f7);font-size:16px;font-weight:700;cursor:pointer;overflow-wrap:anywhere}
+.staff-btn:hover,.staff-btn:focus-visible{border-color:var(--gold)}
+.staff-btn.last{border-color:var(--gold);background:rgba(214,179,101,.12)}
+.staff-btn .small{color:var(--gold2);font-weight:400}
+.staff-manual{display:flex;gap:8px}
+.staff-manual input{flex:1;min-width:0}

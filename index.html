@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Shippori+Mincho:wght@500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=18">
+<link rel="stylesheet" href="album.css?v=20">
 </head>
 <body>
 <div class="bg-stars" id="bgStars" aria-hidden="true"></div>
@@ -141,17 +141,17 @@
     </div>
 
     <div data-panel="message" class="hidden">
+      <div class="card hidden" id="finalCard">
+        <h2>🌕 満月の夜に、灯してくれた人たち</h2>
+        <p class="small muted" style="margin:0 0 8px">アルバムを持っている人だけが見られます。</p>
+        <div class="names-cloud" id="finalNames"></div>
+      </div>
       <div class="card">
         <h2>街への寄せ書き</h2>
         <p class="small muted" style="margin:0 0 8px">この街へのひとことを残せます。最終夜に、アルバムを持っている人だけが見られる寄せ書きとして公開されます（80文字まで）。</p>
         <textarea id="messageInput" maxlength="80" placeholder="例：この街で過ごせて楽しかった！"></textarea>
         <div class="small" id="messageStatus" style="margin-top:6px"></div>
         <div class="row"><span class="small muted" id="messageCount">0 / 80</span><button class="btn sm" type="button" id="messageBtn">残す</button></div>
-      </div>
-      <div class="card hidden" id="finalCard">
-        <h2>🌕 満月の夜に、灯してくれた人たち</h2>
-        <p class="small muted" style="margin:0 0 8px">アルバムを持っている人だけが見られます。</p>
-        <div class="names-cloud" id="finalNames"></div>
       </div>
       <div class="card hidden" id="allMessagesCard">
         <h2>みんなの寄せ書き</h2>
@@ -170,8 +170,8 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=18"></script>
-<script src="album-image.js?v=18"></script>
-<script src="album.js?v=18"></script>
+<script src="cake-api.js?v=20"></script>
+<script src="album-image.js?v=20"></script>
+<script src="album.js?v=20"></script>
 </body>
 </html>
