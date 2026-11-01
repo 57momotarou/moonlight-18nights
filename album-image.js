@@ -523,9 +523,23 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
     ...(visit.night === total ? [{ text: "　満月の夜", font: `500 26px ${IMG_FONT}`, color: "#e8d096" }] : [])
   ], W / 2, 240);
 
-  const im = await imgLoad(await cakeImageSrc(visit.night));
-  const size = selfName && withNames.length ? 600 : hasNames ? 640 : 700;
+  // 一緒に来た人の名前：人数が多いほど文字を小さくし、全員が入るようにケーキ画像を縮める
+  let nameFs = 36, nameLines = [];
+  if (withNames.length) {
+    for (nameFs of [36, 32, 28, 25, 22]) {
+      ctx.font = `500 ${nameFs}px ${IMG_FONT}`;
+      nameLines = imgWrapNames(ctx, withNames, W - 300);
+      if (nameLines.length <= (nameFs >= 32 ? 2 : nameFs >= 28 ? 3 : 5)) break;
+    }
+  }
+  const nameLH = Math.round(nameFs * 1.38);
+  const textH = (hasNames ? 64 : 84) + 56 + (hasNames ? 40 : 0) + (selfName ? 62 : 0)
+    + (withNames.length ? (selfName ? 54 : 62) + (nameLines.length - 1) * nameLH : 0);
   const top = 272;
+  const lastY = 1200;
+  const size = Math.max(330, Math.min(hasNames ? 640 : 700, lastY - top - textH));
+
+  const im = await imgLoad(await cakeImageSrc(visit.night));
   if (im) {
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.45)";
@@ -557,14 +571,13 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
   }
   if (withNames.length) {
     y += selfName ? 54 : 62;
-    ctx.font = `500 36px ${IMG_FONT}`;
-    const lines = imgWrapNames(ctx, withNames, W - 320).slice(0, 2);
-    lines.forEach((line, i) => {
+    const withFs = Math.round(nameFs * 0.94);
+    nameLines.forEach((line, i) => {
       imgRuns(ctx, [
-        ...(i === 0 ? [{ text: "with  ", font: `italic 500 34px ${IMG_EN}`, color: "#cdb170" }] : []),
-        { text: line, font: `500 36px ${IMG_FONT}`, color: "#f4ecd2" }
-      ], W / 2, y, "center", W - 200);
-      y += 48;
+        ...(i === 0 ? [{ text: "with  ", font: `italic 500 ${withFs}px ${IMG_EN}`, color: "#cdb170" }] : []),
+        { text: line, font: `500 ${nameFs}px ${IMG_FONT}`, color: "#f4ecd2" }
+      ], W / 2, y, "center", W - 180);
+      y += nameLH;
     });
   }
   ctx.textAlign = "center";
