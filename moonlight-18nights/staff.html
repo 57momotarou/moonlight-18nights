@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b16">
+<meta name="robots" content="noindex,nofollow">
+<title>ケーキ受付 | Moonlight</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="album.css?v=9">
+</head>
+<body class="staff">
+<main class="wrap">
+  <header class="brand">
+    <img src="icons/icon-192.png" alt="">
+    <div>
+      <div class="eyebrow">18夜の月 ・ スタッフ用</div>
+      <h1>ケーキ受付</h1>
+    </div>
+  </header>
+
+  <div class="test-banner hidden" id="testBanner">
+    <b>テストモード</b>　本番の記録・夜空には入りません。
+    <label>テストの「今夜」<select id="testNightSelect"></select></label>
+  </div>
+
+  <!-- 合言葉と受け付ける人 -->
+  <section class="card" id="loginCard">
+    <h2>受付をはじめる</h2>
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="staffSelect">受け付ける人（従業員管理の在籍中の従業員）</label>
+        <select id="staffSelect" class="night-select"><option value="">読み込み中…</option></select>
+        <input type="text" id="staffInput" maxlength="30" class="hidden" placeholder="名前を入力" style="margin-top:8px">
+      </div>
+      <div class="field">
+        <label for="passInput">合言葉</label>
+        <input type="password" id="passInput" autocomplete="current-password">
+      </div>
+      <button class="btn block" type="submit">はじめる</button>
+      <p class="error" id="loginError"></p>
+    </form>
+  </section>
+
+  <!-- 受付 -->
+  <section id="deskView" class="hidden">
+    <div class="topline">
+      <div class="night-badge" id="nightBadge" style="margin:0">🌙</div>
+      <button class="btn ghost sm" type="button" id="logoutBtn">終了</button>
+    </div>
+    <div class="who-line">受付：<b id="staffName"></b>　<button class="linklike" type="button" id="changeStaffBtn">変更</button></div>
+
+    <section class="card">
+      <h2>ケーキセットを渡したら記録</h2>
+      <div class="field">
+        <label for="nightSelect">どの夜の分？（記録し忘れた夜も選べます）</label>
+        <select id="nightSelect" class="night-select"></select>
+        <div class="late-note hidden" id="lateNote"></div>
+      </div>
+      <div class="field">
+        <label for="nameInput">お客さんの名前か4桁の番号（名前は2〜3文字でOK・ひらがなでも探せます。従業員管理の購入者からも出ます）</label>
+        <input type="text" id="nameInput" maxlength="40" autocomplete="off" enterkeyhint="done">
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <label class="small muted">今回のお客さん（一緒に来た人はまとめて入れる）</label>
+      <div class="chips" id="chips"></div>
+      <p class="small muted" style="margin:-4px 0 12px">同じ夜に別の人ともう一度来たときは、その人と一緒にもう一度記録してください。スタンプは1晩1つのまま、「一緒に来た人」が増えます。</p>
+      <button class="btn block" type="button" id="recordBtn" disabled>ケーキセットを記録</button>
+      <p class="error" id="recordError"></p>
+    </section>
+
+    <section class="card hidden" id="resultCard">
+      <h2>記録しました</h2>
+      <div class="result" id="result"></div>
+    </section>
+
+    <section class="card">
+      <div class="topline" style="margin-bottom:6px">
+        <h2 style="margin:0" id="listTitle">今夜の記録</h2>
+        <span class="small muted" id="tonightCount"></span>
+      </div>
+      <p class="small muted" style="margin:0 0 8px">押し間違えたときは「取消」。上で選んだ夜の記録が出ます。</p>
+      <div class="list" id="tonightList"></div>
+    </section>
+  </section>
+</main>
+<div class="toast hidden" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="cake-api.js?v=9"></script>
+<script src="staff.js?v=9"></script>
+</body>
+</html>
