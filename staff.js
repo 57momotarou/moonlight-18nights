@@ -266,7 +266,9 @@ async function loadTonight() {
         <div><b>${cakeEsc(r.name)}</b>${r.late ? '<span class="late">あとから記録</span>' : ""}
         ${r.together.length ? `<div class="meta">🫖 ${r.together.map(cakeEsc).join("・")} と</div>` : ""}
         <div class="meta">${timeText(r.recorded_at)} ・ No.${cakeEsc(r.code)} ・ ${cakeEsc(r.staff || "")}</div></div>
-        <button class="btn ghost sm" type="button" data-undo="${cakeEsc(r.id)}" data-name="${cakeEsc(r.name)}">取消</button></div>`).join("")
+        <div class="li-actions">
+        ${r.together.length ? `<button class="btn ghost sm" type="button" data-ungroup="${cakeEsc(r.id)}" data-name="${cakeEsc(r.name)}" data-with="${cakeEsc(r.together.join("・"))}">一緒を解除</button>` : ""}
+        <button class="btn ghost sm" type="button" data-undo="${cakeEsc(r.id)}" data-name="${cakeEsc(r.name)}">取消</button></div></div>`).join("")
       || '<div class="small muted">まだ記録はありません</div>';
   } catch (e) {
     toast(e.message);
@@ -284,9 +286,22 @@ async function undo(id, name) {
   }
 }
 
+// 「一緒に来た」だけを外す（来店の記録は残る）
+async function ungroup(id, name, withNames) {
+  if (!confirm(`${name} さんを「一緒に来た」から外しますか？\n（${withNames} との組から外れます。来店の記録は残ります）`)) return;
+  try {
+    await cakeRpc("cake_staff_ungroup", { p_pass: pass, p_visit_id: id });
+    toast("一緒に来た記録を外しました");
+    loadTonight();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
 // ---------- 起動 ----------
 function start() {
   if (CAKE_TEST) {
+    cakeMarkDemo();
     $("testBanner").classList.remove("hidden");
     const sel = $("testNightSelect");
     sel.innerHTML = cakeTestOptions(18);
@@ -351,6 +366,8 @@ function start() {
     loadTonight();
   });
   $("tonightList").addEventListener("click", (e) => {
+    const g = e.target.closest("[data-ungroup]");
+    if (g) { ungroup(g.dataset.ungroup, g.dataset.name, g.dataset.with); return; }
     const b = e.target.closest("[data-undo]");
     if (b) undo(b.dataset.undo, b.dataset.name);
   });

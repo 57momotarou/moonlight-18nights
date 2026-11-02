@@ -72,6 +72,22 @@ function cakeTestNight() {
   return Number.isInteger(v) && v >= 0 ? v : 1;
 }
 
+// デモページ（?test=1）だと一目でわかるように：上の帯・オレンジの枠・うすい「DEMO」の透かし・タブ名に【デモ】
+function cakeMarkDemo() {
+  if (!CAKE_TEST || document.body.classList.contains("is-demo")) return;
+  document.body.classList.add("is-demo");
+  if (!document.title.startsWith("【デモ】")) document.title = `【デモ】${document.title}`;
+  const bar = document.createElement("div");
+  bar.className = "demo-ribbon";
+  bar.innerHTML = "<b>DEMO</b> デモページ ― 本番の記録・番号とは別です";
+  document.body.prepend(bar);
+  const mark = document.createElement("div");
+  mark.className = "demo-watermark";
+  mark.setAttribute("aria-hidden", "true");
+  mark.textContent = "DEMO";
+  document.body.append(mark);
+}
+
 function setCakeTestNight(n) {
   try { sessionStorage.setItem(CAKE_TEST_KEY, String(n)); } catch {}
 }

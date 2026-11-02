@@ -75,7 +75,7 @@ function paintBgStars() {
 function renderSky() {
   if (!pub) return;
   const { stars, thresholds, stage, night, total_nights: total, start_date: start, tonight_stars: tonight } = pub;
-  document.body.className = `stage-${stage}`;
+  document.body.className = `stage-${stage}${CAKE_TEST ? " is-demo" : ""}`;
 
   let badge;
   if (night < 1) badge = `🌑 ${cakeNightDate(start, 1)} 開幕`;
@@ -436,7 +436,7 @@ function showNameRequest() {
 async function sendNameRequest() {
   const name = $("newNameInput").value.trim();
   try {
-    await cakeRpc("cake_request_name", { p_code: code, p_name: name });
+    await cakeRpc("cake_request_name", { p_code: code, p_name: name, ...testArgs() });
     closeModal();
     toast("名前の変更を送りました。店長の確認をお待ちください");
     await openAlbum(code, { quiet: true });
@@ -591,7 +591,7 @@ async function saveMessage() {
   const btn = $("messageBtn");
   btn.disabled = true;
   try {
-    const r = await cakeRpc("cake_set_message", { p_code: code, p_message: $("messageInput").value });
+    const r = await cakeRpc("cake_set_message", { p_code: code, p_message: $("messageInput").value, ...testArgs() });
     if (album) { album.message = r.message; album.message_status = r.message_status; }
     renderMessageStatus();
     toast(r.message ? "ひとことを残しました" : "ひとことを消しました");
@@ -616,6 +616,7 @@ function startPolling() {
 function start() {
   paintBgStars();
   if (CAKE_TEST) {
+    cakeMarkDemo();
     $("testBanner").classList.remove("hidden");
     const sel = $("testNightSelect");
     sel.innerHTML = cakeTestOptions(18);
