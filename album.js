@@ -323,6 +323,7 @@ function renderAlbum() {
   const seen = getSeen();
 
   $("albumName").textContent = a.name;
+  $("albumCode").textContent = a.code ? `No. ${a.code}` : "";
   $("nameReq").innerHTML = a.name_request
     ? `名前の変更を確認中：「${cakeEsc(a.name_request.new_name)}」`
     : `<button type="button" class="linklike small" id="nameFixBtn">名前がまちがっているときは</button>`;
