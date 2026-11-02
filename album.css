@@ -200,8 +200,14 @@ button.pair-card{width:100%;color:inherit;font:inherit;cursor:pointer;text-align
 
 /* ===== タブ・フレーム・連続来店・証明書 ===== */
 .tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 14px;padding:6px;border-radius:16px;background:rgba(7,11,22,.88);border:1px solid var(--line);backdrop-filter:blur(10px)}
-.tab{border:0;border-radius:12px;padding:10px 4px;background:transparent;color:var(--muted);font-weight:700;font-size:14px}
-.tab.active{background:rgba(214,179,101,.16);color:var(--gold2)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--line2);border-radius:12px;padding:8px 4px 7px;background:rgba(255,255,255,.04);color:var(--text);cursor:pointer;line-height:1.25;transition:background .15s,border-color .15s}
+.tab .tab-ic{width:24px;height:24px;color:var(--gold2);margin-bottom:2px}
+.tab.active .tab-ic{color:#1a1205}
+.tab .tab-t{font-weight:700;font-size:14px;white-space:nowrap}
+.tab .tab-s{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.tab:not(.active):hover{border-color:var(--gold)}
+.tab.active{background:linear-gradient(180deg,#e6c77d,#c49a45);border-color:#e6c77d;color:#1a1205;box-shadow:0 4px 14px rgba(214,179,101,.3)}
+.tab.active .tab-s{color:#4a3510}
 .frames{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .frame-chip{position:relative;border:1px solid var(--line2);border-radius:14px;background:#0c1426;padding:10px 6px;text-align:center;color:var(--text);font-size:13px}
 .frame-chip b{display:block;font-family:var(--mincho);color:var(--gold2);font-size:15px}
