@@ -27,8 +27,8 @@ async function imgFonts(sample = "") {
     await Promise.all([
       document.fonts.load(`600 60px ${IMG_FONT}`, base),
       document.fonts.load(`500 40px ${IMG_FONT}`, base),
-      document.fonts.load(`500 30px ${IMG_EN}`, "EIGHTEEN NIGHTS OF THE MOON 0123456789"),
-      document.fonts.load(`600 30px ${IMG_EN}`, "0123456789"),
+      document.fonts.load(`500 30px ${IMG_EN}`, "EIGHTEEN NIGHTS OF THE MOON"),
+      document.fonts.load(`600 30px ${IMG_FONT}`, "0123456789"),
       document.fonts.load(`italic 500 30px ${IMG_EN}`, "November with & cafe bar Moonlight")
     ]);
   } catch {}
@@ -519,7 +519,8 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
   ctx.font = `600 58px ${IMG_FONT}`;
   imgSpaced(ctx, `第${imgNightKanji(visit.night)}夜`, W / 2, 196, 6);
   imgRuns(ctx, [
-    { text: imgDateEn(startDate, visit.night), font: `italic 500 30px ${IMG_EN}`, color: "#b8c1d6" },
+    { text: `${imgDateEn(startDate, visit.night).split(" ")[0]} `, font: `italic 500 30px ${IMG_EN}`, color: "#b8c1d6" },
+    { text: imgDateEn(startDate, visit.night).split(" ")[1], font: `500 27px ${IMG_FONT}`, color: "#b8c1d6" },
     ...(visit.night === total ? [{ text: "　満月の夜", font: `500 26px ${IMG_FONT}`, color: "#e8d096" }] : [])
   ], W / 2, 240);
 
@@ -759,7 +760,7 @@ async function makeSkyImage(pub) {
 
   ctx.textAlign = "left";
   ctx.fillStyle = imgGold(ctx, 70, 0, 400, 0);
-  ctx.font = `600 150px ${IMG_EN}`;
+  ctx.font = `600 140px ${IMG_FONT}`;  // 数字は明朝（Cormorant の数字はローマ数字のように見えるため）
   ctx.fillText(String(pub.stars), 70, H - 190);
   const wNum = ctx.measureText(String(pub.stars)).width;
   ctx.fillStyle = "#e8d096";
