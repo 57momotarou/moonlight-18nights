@@ -264,10 +264,9 @@ async function loadTonight() {
     $("tonightCount").textContent = `${res.records.length}人`;
     $("tonightList").innerHTML = res.records.map((r) => `<div class="li">
         <div><b>${cakeEsc(r.name)}</b>${r.late ? '<span class="late">あとから記録</span>' : ""}
-        ${r.together.length ? `<div class="meta">🫖 ${r.together.map(cakeEsc).join("・")} と</div>` : ""}
+        ${(r.together_people || []).length ? `<div class="meta">🫖 一緒に来た人（✕で外す）</div><div class="unpair-list">${r.together_people.map((o) => `<button type="button" class="unpair" data-unpair="${cakeEsc(r.id)}" data-other="${cakeEsc(o.id)}" data-name="${cakeEsc(r.name)}" data-oname="${cakeEsc(o.name)}">${cakeEsc(o.name)}<span aria-hidden="true">✕</span></button>`).join("")}</div>` : ""}
         <div class="meta">${timeText(r.recorded_at)} ・ No.${cakeEsc(r.code)} ・ ${cakeEsc(r.staff || "")}</div></div>
         <div class="li-actions">
-        ${r.together.length ? `<button class="btn ghost sm" type="button" data-ungroup="${cakeEsc(r.id)}" data-name="${cakeEsc(r.name)}" data-with="${cakeEsc(r.together.join("・"))}">一緒を解除</button>` : ""}
         <button class="btn ghost sm" type="button" data-undo="${cakeEsc(r.id)}" data-name="${cakeEsc(r.name)}">取消</button></div></div>`).join("")
       || '<div class="small muted">まだ記録はありません</div>';
   } catch (e) {
@@ -286,11 +285,11 @@ async function undo(id, name) {
   }
 }
 
-// 「一緒に来た」だけを外す（来店の記録は残る）
-async function ungroup(id, name, withNames) {
-  if (!confirm(`${name} さんを「一緒に来た」から外しますか？\n（${withNames} との組から外れます。来店の記録は残ります）`)) return;
+// 2人の間だけ「一緒に来た」を外す（ほかの人とのつながりと来店の記録は残る）
+async function unpair(id, other, name, otherName) {
+  if (!confirm(`${name} さんと ${otherName} さんの「一緒に来た」を外しますか？\n（ほかの人とのつながりと、来店の記録は残ります）`)) return;
   try {
-    await cakeRpc("cake_staff_ungroup", { p_pass: pass, p_visit_id: id });
+    await cakeRpc("cake_staff_ungroup_pair", { p_pass: pass, p_visit_id: id, p_other: other });
     toast("一緒に来た記録を外しました");
     loadTonight();
   } catch (e) {
@@ -366,8 +365,8 @@ function start() {
     loadTonight();
   });
   $("tonightList").addEventListener("click", (e) => {
-    const g = e.target.closest("[data-ungroup]");
-    if (g) { ungroup(g.dataset.ungroup, g.dataset.name, g.dataset.with); return; }
+    const u = e.target.closest("[data-unpair]");
+    if (u) { unpair(u.dataset.unpair, u.dataset.other, u.dataset.name, u.dataset.oname); return; }
     const b = e.target.closest("[data-undo]");
     if (b) undo(b.dataset.undo, b.dataset.name);
   });

@@ -258,3 +258,7 @@ body.is-demo .tabs{top:42px}
 
 .album-label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .my-code{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--gold);background:rgba(214,179,101,.14);color:var(--gold2);font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.12em}
+.unpair-list{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.unpair{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:var(--text);font-size:13px;cursor:pointer}
+.unpair span{color:#ff9b8a;font-size:12px}
+.unpair:hover{border-color:#ff9b8a}
