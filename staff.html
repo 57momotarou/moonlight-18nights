@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=26">
+<link rel="stylesheet" href="album.css?v=27">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -90,12 +90,32 @@
       <p class="small muted" style="margin:0 0 8px">押し間違えたときは「取消」。上で選んだ夜の記録が出ます。</p>
       <div class="list" id="tonightList"></div>
     </section>
+
+    <!-- 謎解き「宛先不明のケーキ便」 -->
+    <section class="card" id="dlvCard">
+      <div class="topline" style="margin-bottom:6px">
+        <h2 style="margin:0">📮 ケーキ便</h2>
+        <span class="small muted" id="dlvCount"></span>
+      </div>
+      <p class="small muted" style="margin:0 0 8px">「謎解きに参加したい」と言われたら、名前か4桁の番号で参加を登録します（ケーキセットの記録とは別。アルバムがない人には番号を発行します）。</p>
+      <div class="dlv-guide small" id="dlvGuideJoin"></div>
+      <div class="field">
+        <label for="dlvInput">参加する人（名前か4桁の番号）</label>
+        <input type="text" id="dlvInput" maxlength="40" autocomplete="off" enterkeyhint="done">
+        <div class="suggest" id="dlvSuggest"></div>
+      </div>
+      <p class="error" id="dlvError"></p>
+      <div class="result hidden" id="dlvResult"></div>
+      <h3 style="margin:14px 0 6px;font-family:var(--mincho);color:var(--gold2)">配達員の一覧</h3>
+      <div class="dlv-guide small" id="dlvGuideDone"></div>
+      <div class="list" id="dlvList"></div>
+    </section>
   </section>
 </main>
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=26"></script>
-<script src="staff.js?v=26"></script>
+<script src="cake-api.js?v=27"></script>
+<script src="staff.js?v=27"></script>
 </body>
 </html>

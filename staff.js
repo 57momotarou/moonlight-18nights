@@ -1,4 +1,5 @@
 // staff.js — 従業員用ケーキ受付：合言葉でログイン → 自分の名前を選ぶ → 名前か番号で選んで記録。新しい人には4桁の番号を発行。
+// 謎解き「宛先不明のケーキ便」の参加登録と、正解済みの人の「完了」（報酬を渡したら押す）もここ。
 "use strict";
 
 const PASS_KEY = "moonlight-cake-staff-pass";
@@ -142,6 +143,9 @@ function openDesk() {
   showCard("deskView");
   renderBadge();
   loadTonight();
+  loadDelivery();
+  clearInterval(dlvPoll);
+  dlvPoll = setInterval(() => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) loadDelivery(); }, 20000);
   $("nameInput").focus();
 }
 
@@ -152,6 +156,7 @@ function showStaffPick() {
 }
 
 function logout() {
+  clearInterval(dlvPoll);
   pass = "";
   staff = "";
   selNight = null;
@@ -297,6 +302,153 @@ async function unpair(id, other, name, otherName) {
   }
 }
 
+// ---------- 謎解き「宛先不明のケーキ便」 ----------
+let dlvSuggestions = [];
+let dlvTimer = null;
+let dlvSeq = 0;
+let dlvRows = [];
+let dlvPoll = null;
+
+function dlvTime(iso) {
+  return new Date(iso).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" });
+}
+
+function dlvStatus(r) {
+  if (r.stage >= 4) return '<span class="dlv-st s4">完了</span>';
+  if (r.stage === 3) return '<span class="dlv-st s3">正解済み</span>';
+  if (r.stage === 2) return `<span class="dlv-st s2">招待状まで${r.answer_tries ? `・謎に${r.answer_tries}回挑戦` : ""}</span>`;
+  return '<span class="dlv-st">配達中</span>';
+}
+
+async function loadDelivery() {
+  if (!pass) return;
+  try {
+    const res = await cakeRpc("cake_staff_delivery_list", { p_pass: pass, ...testArgs() });
+    dlvRows = Array.isArray(res.rows) ? res.rows : [];
+    const g = res.guide || {};
+    $("dlvGuideJoin").textContent = g.join || "";
+    $("dlvGuideDone").textContent = g.done || "";
+    const waiting = dlvRows.filter((r) => r.stage === 3).length;
+    const done = dlvRows.filter((r) => r.stage >= 4).length;
+    $("dlvCount").textContent = `${dlvRows.length}人${waiting ? `・完了待ち${waiting}` : ""}${done ? `・完了${done}` : ""}`;
+    $("dlvList").innerHTML = dlvRows.map((r, i) => {
+      const meta = r.stage >= 4
+        ? `✓ 完了 ${dlvTime(r.done_at)} ・ ${cakeEsc(r.done_by || "")}`
+        : r.stage === 3 ? `依頼人が分かった ${dlvTime(r.solved_at)}` : `参加 ${dlvTime(r.joined_at)} ・ ${cakeEsc(r.joined_by || "")}`;
+      const actions = r.stage >= 4
+        ? `<button class="btn ghost sm" type="button" data-dlv-undo="${i}">取消</button>`
+        : r.stage === 3
+          ? `<button class="btn sm" type="button" data-dlv-done="${i}">完了</button>`
+          : `<button class="btn ghost sm" type="button" data-dlv-leave="${i}">参加取消</button>`;
+      return `<div class="li${r.stage === 3 ? " dlv-wait" : ""}${r.stage >= 4 ? " dlv-done-row" : ""}">
+        <div><b>${cakeEsc(r.name)}</b>${dlvStatus(r)}
+          <div class="meta">配達員No.${r.no} ・ アルバム ${cakeEsc(r.code)}</div>
+          <div class="meta">${meta}</div></div>
+        <div class="li-actions">${actions}</div></div>`;
+    }).join("") || '<div class="small muted">まだ参加者はいません</div>';
+  } catch (e) {
+    $("dlvList").innerHTML = `<div class="small" style="color:var(--danger)">${cakeEsc(e.message)}</div>`;
+    if (/合言葉/.test(e.message)) logout();
+  }
+}
+
+function dlvRenderSuggest() {
+  const typed = cleanName($("dlvInput").value);
+  if (!typed) { $("dlvSuggest").innerHTML = ""; return; }
+  const isCode = /^[0-9０-９]{1,4}$/.test(typed);
+  const exact = isCode || dlvSuggestions.some((x) => nameKey(x.name) === nameKey(typed));
+  const joined = new Set(dlvRows.map((r) => r.code));
+  let html = dlvSuggestions.map((x, i) => {
+    const isApp = x.source === "app";
+    const already = !isApp && joined.has(x.code);
+    const meta = already ? "参加済み" : isApp ? "購入者・アルバムはまだ" : `No.${x.code}`;
+    return `<button type="button" data-dlv-i="${i}" class="${already ? "done" : ""}"><span>${cakeEsc(x.name)}</span><span class="meta${isApp ? " app" : ""}">${cakeEsc(meta)}</span></button>`;
+  }).join("");
+  if (isCode && !dlvSuggestions.length) html += `<div class="small muted" style="padding:6px 4px">番号「${cakeEsc(typed)}」のアルバムは見つかりません</div>`;
+  if (!exact) html += `<button type="button" data-dlv-new="1" class="new"><span>＋ 新しく登録して参加：${cakeEsc(typed)}</span><span class="meta">初めての人</span></button>`;
+  $("dlvSuggest").innerHTML = html;
+}
+
+function dlvSearch() {
+  const q = cleanName($("dlvInput").value);
+  $("dlvError").textContent = "";
+  clearTimeout(dlvTimer);
+  if (!q) { dlvSuggestions = []; dlvRenderSuggest(); return; }
+  dlvRenderSuggest();
+  dlvTimer = setTimeout(async () => {
+    const seq = ++dlvSeq;
+    try {
+      const res = await cakeRpc("cake_staff_search", { p_pass: pass, p_query: q, ...testArgs() });
+      if (seq !== dlvSeq) return;
+      dlvSuggestions = Array.isArray(res) ? res : [];
+      dlvRenderSuggest();
+    } catch (e) {
+      toast(e.message);
+    }
+  }, 220);
+}
+
+// query は名前か4桁の番号、label は確認に出す名前
+async function dlvJoin(query, isNew, label = query) {
+  query = cleanName(query);
+  label = cleanName(label);
+  if (!query) return;
+  const msg = isNew
+    ? `「${label}」さんを初めてのお客さんとして登録して、ケーキ便に参加させます。\n（アルバムの番号を発行します。ケーキセットの記録はしません）\n\n名前のまちがいはないですか？`
+    : `${label} さんをケーキ便に参加させますか？`;
+  if (!confirm(msg)) return;
+  try {
+    const r = await cakeRpc("cake_staff_delivery_join", { p_pass: pass, p_staff: staff, p_name: query, ...testArgs() });
+    $("dlvInput").value = "";
+    dlvSuggestions = [];
+    dlvRenderSuggest();
+    $("dlvResult").innerHTML = r.already
+      ? `<div class="r"><b>${cakeEsc(r.name)}</b>　もう参加しています（配達員No.${r.no}・アルバム ${cakeEsc(r.code)}）</div>`
+      : `<div class="r new"><b>${cakeEsc(r.name)}</b>　ケーキ便に参加しました（配達員No.${r.no}）
+          ${r.is_new ? `<div class="code">${cakeEsc(r.code)}</div><div class="small">「アルバム番号は <b>${cakeEsc(r.code)}</b> です。アルバムに配達員のページが届いています」と伝えてください</div>`
+                     : `<div class="small">アルバム ${cakeEsc(r.code)} に「ケーキ便」のタブが増えました。注文票の画像を渡してください</div>`}</div>`;
+    $("dlvResult").classList.remove("hidden");
+    toast(r.already ? "もう参加しています" : "参加を登録しました");
+    loadDelivery();
+  } catch (e) {
+    $("dlvError").textContent = e.message;
+    if (/合言葉/.test(e.message)) logout();
+  }
+}
+
+async function dlvDone(r) {
+  if (!confirm(`${r.name} さんの「配達完了」を記録しますか？\n\n報酬を渡してから押してください。\n押すと、${r.name} さんのページに配達完了が届きます。`)) return;
+  try {
+    const res = await cakeRpc("cake_staff_delivery_done", { p_pass: pass, p_staff: staff, p_code: r.code, ...testArgs() });
+    toast(`完了にしました（${res.rank}番目の配達員）`);
+    loadDelivery();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function dlvUndo(r) {
+  if (!confirm(`${r.name} さんの「完了」を取り消しますか？\n（押し間違えたときだけ。正解済みに戻ります）`)) return;
+  try {
+    await cakeRpc("cake_staff_delivery_undo", { p_pass: pass, p_code: r.code, ...testArgs() });
+    toast("完了を取り消しました");
+    loadDelivery();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function dlvLeave(r) {
+  if (!confirm(`${r.name} さんのケーキ便の参加を取り消しますか？\n（ここまでの進み具合も消えます。アルバムは残ります）`)) return;
+  try {
+    await cakeRpc("cake_staff_delivery_leave", { p_pass: pass, p_code: r.code, ...testArgs() });
+    toast("参加を取り消しました");
+    loadDelivery();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
 // ---------- 起動 ----------
 function start() {
   if (CAKE_TEST) {
@@ -370,7 +522,32 @@ function start() {
     const b = e.target.closest("[data-undo]");
     if (b) undo(b.dataset.undo, b.dataset.name);
   });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) loadTonight(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) { loadTonight(); loadDelivery(); } });
+  $("dlvInput").addEventListener("input", dlvSearch);
+  $("dlvInput").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.isComposing) return;
+    e.preventDefault();
+    const first = $("dlvSuggest").querySelector("button:not(.done)");
+    if (first) first.click();
+  });
+  $("dlvSuggest").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.classList.contains("done")) return;
+    if (b.dataset.dlvNew) dlvJoin($("dlvInput").value, true);
+    else {
+      const x = dlvSuggestions[Number(b.dataset.dlvI)];
+      if (x) dlvJoin(x.source === "app" ? x.name : x.code, x.source === "app", x.name);
+    }
+  });
+  $("dlvList").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const r = dlvRows[Number(b.dataset.dlvDone ?? b.dataset.dlvUndo ?? b.dataset.dlvLeave)];
+    if (!r) return;
+    if (b.dataset.dlvDone !== undefined) dlvDone(r);
+    else if (b.dataset.dlvUndo !== undefined) dlvUndo(r);
+    else if (b.dataset.dlvLeave !== undefined) dlvLeave(r);
+  });
 
   // 合言葉を覚えていればログイン画面は飛ばすが、名前はページを開くたびに選ぶ
   loadEmployees();

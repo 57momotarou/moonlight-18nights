@@ -1,4 +1,4 @@
-// album.js — お客さん用ページ：夜空（誰でも）と、4桁の番号で開くアルバム（図鑑・画像と飾り・寄せ書きのタブ）。画像は album-image.js。
+// album.js — お客さん用ページ：夜空（誰でも）と、4桁の番号で開くアルバム（図鑑・画像と飾り・寄せ書きのタブ。ケーキ便の参加者にはケーキ便のタブ＝delivery.js）。画像は album-image.js。
 "use strict";
 
 const CODE_KEY = "moonlight-album-code";
@@ -291,6 +291,8 @@ function setTab(tab) {
   });
   document.querySelectorAll("[data-panel]").forEach((el) => el.classList.toggle("hidden", el.dataset.panel !== tab));
   if (tab === "images") renderImagesTab();
+  if (tab === "delivery") renderDelivery();
+  else renderDeliveryTab();
 }
 
 // みんなの寄せ書き（最終夜から。アルバムを開いた人だけに届く）
@@ -327,7 +329,7 @@ function renderAlbum() {
   $("nameReq").innerHTML = a.name_request
     ? `名前の変更を確認中：「${cakeEsc(a.name_request.new_name)}」`
     : `<button type="button" class="linklike small" id="nameFixBtn">名前がまちがっているときは</button>`;
-  $("albumTitle").textContent = `${titleFor(count)}　・　${count} / ${total}夜${a.maxStreak >= 2 ? `　・　✦ 最長${a.maxStreak}夜連続` : ""}`;
+  $("albumTitle").textContent = [titleFor(count), `${count} / ${total}夜`, a.maxStreak >= 2 ? `✦ 最長${a.maxStreak}夜連続` : ""].filter(Boolean).join("　・　");
   $("myMoon").innerHTML = moonSvg(count / total, 76, true);
   $("gridCard").classList.toggle("complete", count >= total);
 
@@ -378,6 +380,8 @@ function renderAlbum() {
   renderTonightCard();
   cakeHydrateImages($("albumView"));
   if (activeTab === "images") renderImagesTab();
+  renderDeliveryTab();
+  if (activeTab === "delivery") renderDelivery();
 }
 
 // ---------- カードの詳細と画像保存 ----------
@@ -576,6 +580,7 @@ function closeAlbum() {
   cakeStore(CODE_KEY, null);
   $("albumView").classList.add("hidden");
   renderTonightCard();
+  dlvReset();
   setTab("collection");
   $("certBody").innerHTML = "";
   $("openCard").classList.remove("hidden");
@@ -616,6 +621,7 @@ function startPolling() {
 // ---------- 起動 ----------
 function start() {
   paintBgStars();
+  dlvInit();
   if (CAKE_TEST) {
     cakeMarkDemo();
     $("testBanner").classList.remove("hidden");
