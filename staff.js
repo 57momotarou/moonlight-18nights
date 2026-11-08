@@ -420,7 +420,7 @@ async function dlvJoin(query, isNew, label = query) {
       ? `<div class="r"><b>${cakeEsc(r.name)}</b>　もう参加しています（配達員No.${r.no}・アルバム ${cakeEsc(r.code)}）</div>`
       : `<div class="r new"><b>${cakeEsc(r.name)}</b>　ケーキ便に参加しました（配達員No.${r.no}）
           ${r.is_new ? `<div class="code">${cakeEsc(r.code)}</div><div class="small">「アルバム番号は <b>${cakeEsc(r.code)}</b> です。アルバムに配達員のページが届いています」と伝えてください</div>`
-                     : `<div class="small">アルバム ${cakeEsc(r.code)} に「ケーキ便」のタブが増えました。注文票の画像を渡してください</div>`}</div>`;
+                     : `<div class="small">アルバム ${cakeEsc(r.code)} に「ケーキ便」のタブが増えました。タブの中で注文票を見てもらってください</div>`}</div>`;
     $("dlvResult").classList.remove("hidden");
     toast(r.already ? "もう参加しています" : "参加を登録しました");
     loadDelivery();
@@ -441,7 +441,7 @@ async function dlvJoinAfterRecord(records) {
       lines.push(`📮 ${cakeEsc(r.name)}：ケーキ便に参加できませんでした（${cakeEsc(e.message)}）`);
     }
   }
-  $("result").insertAdjacentHTML("beforeend", `<div class="small" style="margin-top:6px;color:var(--gold2)">${lines.join("<br>")}<br>注文票の画像を渡してください</div>`);
+  $("result").insertAdjacentHTML("beforeend", `<div class="small" style="margin-top:6px;color:var(--gold2)">${lines.join("<br>")}<br>アルバムの「ケーキ便」タブで注文票を見てもらってください</div>`);
   loadDelivery();
 }
 
