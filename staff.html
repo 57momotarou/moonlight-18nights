@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=27">
+<link rel="stylesheet" href="album.css?v=29">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -73,6 +73,7 @@
       <label class="small muted">今回のお客さん（一緒に来た人はまとめて入れる）</label>
       <div class="chips" id="chips"></div>
       <p class="small muted" style="margin:-4px 0 12px">同じ夜に別の人ともう一度来たときは、その人と一緒にもう一度記録してください。スタンプは1晩1つのまま、「一緒に来た人」が増えます。</p>
+      <label class="dlv-check"><input type="checkbox" id="dlvWithRecord"> 📮 ケーキ便にも参加する（今回のお客さん全員）</label>
       <button class="btn block" type="button" id="recordBtn" disabled>ケーキセットを記録</button>
       <p class="error" id="recordError"></p>
     </section>
@@ -97,7 +98,7 @@
         <h2 style="margin:0">📮 ケーキ便</h2>
         <span class="small muted" id="dlvCount"></span>
       </div>
-      <p class="small muted" style="margin:0 0 8px">「謎解きに参加したい」と言われたら、名前か4桁の番号で参加を登録します（ケーキセットの記録とは別。アルバムがない人には番号を発行します）。</p>
+      <p class="small muted" style="margin:0 0 8px">ケーキセットを買う人は、上の記録のときに「ケーキ便にも参加する」にチェックすれば参加できます。買わずに参加する人は、ここで名前か4桁の番号から登録します（アルバムがない人には番号を発行します）。</p>
       <div class="dlv-guide small" id="dlvGuideJoin"></div>
       <div class="field">
         <label for="dlvInput">参加する人（名前か4桁の番号）</label>
@@ -115,7 +116,7 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=27"></script>
-<script src="staff.js?v=27"></script>
+<script src="cake-api.js?v=29"></script>
+<script src="staff.js?v=29"></script>
 </body>
 </html>

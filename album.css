@@ -347,7 +347,7 @@ body.is-demo .tabs{top:42px}
 .inv-rule i{display:block;width:70px;width:21cqw;height:1px;background:linear-gradient(90deg,transparent,#e8d096)}
 .inv-rule i:last-child{transform:scaleX(-1)}
 .inv-rule b{width:6px;height:6px;background:#e8d096;transform:rotate(45deg)}
-.inv-lines{font-family:"Klee One",var(--mincho);font-size:16px;font-size:5.1cqw;line-height:1.95}
+.inv-lines{font-family:"Klee One",var(--mincho);font-weight:600;font-size:16px;font-size:5.1cqw;line-height:1.95}
 .inv-lines p{margin:0}
 .inv-lines p.gap{height:.8em}
 .inv-boxes{display:flex;justify-content:center;gap:9px;gap:2.8cqw;margin-top:22px;margin-top:7cqw}
@@ -408,3 +408,5 @@ body.is-demo .tabs{top:42px}
 .dlv-st.s4{color:var(--ok);border-color:rgba(127,220,178,.5)}
 .list .li.dlv-wait{border:1px solid var(--gold);background:rgba(214,179,101,.1)}
 .list .li.dlv-done-row{opacity:.75}
+.dlv-check{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);font-size:14px;cursor:pointer}
+.dlv-check input{width:20px;height:20px;accent-color:#d6b365}

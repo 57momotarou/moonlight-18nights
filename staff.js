@@ -254,6 +254,10 @@ async function record() {
     renderChips();
     loadTonight();
     toast("記録しました");
+    if ($("dlvWithRecord").checked) {
+      $("dlvWithRecord").checked = false;
+      await dlvJoinAfterRecord(res.records);
+    }
   } catch (e) {
     $("recordError").textContent = e.message;
     if (/合言葉/.test(e.message)) logout();
@@ -393,10 +397,6 @@ async function dlvJoin(query, isNew, label = query) {
   query = cleanName(query);
   label = cleanName(label);
   if (!query) return;
-  const msg = isNew
-    ? `「${label}」さんを初めてのお客さんとして登録して、ケーキ便に参加させます。\n（アルバムの番号を発行します。ケーキセットの記録はしません）\n\n名前のまちがいはないですか？`
-    : `${label} さんをケーキ便に参加させますか？`;
-  if (!confirm(msg)) return;
   try {
     const r = await cakeRpc("cake_staff_delivery_join", { p_pass: pass, p_staff: staff, p_name: query, ...testArgs() });
     $("dlvInput").value = "";
@@ -414,6 +414,21 @@ async function dlvJoin(query, isNew, label = query) {
     $("dlvError").textContent = e.message;
     if (/合言葉/.test(e.message)) logout();
   }
+}
+
+// ケーキセットの記録といっしょに参加（記録した全員）
+async function dlvJoinAfterRecord(records) {
+  const lines = [];
+  for (const r of records || []) {
+    try {
+      const j = await cakeRpc("cake_staff_delivery_join", { p_pass: pass, p_staff: staff, p_name: r.code, ...testArgs() });
+      lines.push(`📮 ${cakeEsc(j.name)}：${j.already ? "もうケーキ便に参加しています" : "ケーキ便に参加しました"}（配達員No.${j.no}）`);
+    } catch (e) {
+      lines.push(`📮 ${cakeEsc(r.name)}：ケーキ便に参加できませんでした（${cakeEsc(e.message)}）`);
+    }
+  }
+  $("result").insertAdjacentHTML("beforeend", `<div class="small" style="margin-top:6px;color:var(--gold2)">${lines.join("<br>")}<br>注文票の画像を渡してください</div>`);
+  loadDelivery();
 }
 
 async function dlvDone(r) {

@@ -44,7 +44,9 @@ function dlvAssetUrl(a) {
   if (!dlvUrlCache.has(a.file)) {
     const p = (async () => {
       if (!window.crypto || !crypto.subtle) throw new Error("このブラウザでは画像を開けません");
-      const res = await fetch(`assets/${a.file}`, { cache: "force-cache" });
+      // 公開直後に一度失敗した結果（404）が残っていることがあるので、だめなら取り直す
+      let res = await fetch(`assets/${a.file}`, { cache: "force-cache" }).catch(() => null);
+      if (!res || !res.ok) res = await fetch(`assets/${a.file}?r=${Date.now()}`, { cache: "reload" });
       if (!res.ok) throw new Error("画像を読み込めませんでした");
       const buf = new Uint8Array(await res.arrayBuffer());
       const raw = Uint8Array.from(atob(a.key), (c) => c.charCodeAt(0));
@@ -126,7 +128,9 @@ function renderDelivery(force = false) {
 }
 
 function dlvIdCard(d) {
-  const steps = ["届け先", "招待状", "依頼人", "完了"];
+  // まだ着いていない段階の名前は「？」（先の展開を見せない）
+  const names = ["配達", "招待状", "依頼人", "完了"];
+  const steps = names.map((s, i) => (i + 1 <= d.stage || i === 3 ? s : "？"));
   return `<section class="card dlv-id">
     <div class="dlv-id-top"><span class="dlv-eyebrow">CAKE DELIVERY ・ 配達員証</span><span class="dlv-no">No.${String(d.no).padStart(3, "0")}</span></div>
     <div class="dlv-id-main">
