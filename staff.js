@@ -226,6 +226,18 @@ function renderChips() {
   $("recordBtn").disabled = n === 0;
   $("recordBtn").textContent = n > 1 ? `${when}ケーキセットを記録（${n}人・一緒に来た）` : `${when}ケーキセットを記録`;
   $("recordError").textContent = "";
+  renderDlvPick();
+}
+
+// ケーキ便にも参加する人（1人ずつ選ぶ・全員）
+function renderDlvPick() {
+  const box = $("dlvPick");
+  box.classList.toggle("hidden", chips.length === 0);
+  if (!chips.length) { box.innerHTML = ""; return; }
+  const all = chips.every((c) => c.dlv);
+  box.innerHTML = `<div class="dlv-pick-head"><span>📮 ケーキ便にも参加する人</span>
+      <button type="button" class="btn ghost sm" data-dlv-all="${all ? "0" : "1"}">${all ? "全員はずす" : "全員選ぶ"}</button></div>
+    <div class="dlv-pick-list">${chips.map((c, i) => `<label class="dlv-check"><input type="checkbox" data-dlv-pick="${i}"${c.dlv ? " checked" : ""}> ${cakeEsc(c.name)}</label>`).join("")}</div>`;
 }
 
 // ---------- 記録 ----------
@@ -236,6 +248,7 @@ async function record() {
   if (isLate() && !confirm(`第${targetNight()}夜（${cakeNightDate(info.start_date, targetNight())}）の分として記録します。よろしいですか？`)) return;
   const btn = $("recordBtn");
   btn.disabled = true;
+  const picked = chips.map((c) => Boolean(c.dlv));
   try {
     const res = await cakeRpc("cake_staff_record", {
       p_pass: pass, p_staff: staff, p_names: chips.map((c) => c.name), p_night: targetNight() || null, ...testArgs()
@@ -254,10 +267,8 @@ async function record() {
     renderChips();
     loadTonight();
     toast("記録しました");
-    if ($("dlvWithRecord").checked) {
-      $("dlvWithRecord").checked = false;
-      await dlvJoinAfterRecord(res.records);
-    }
+    const joinRecords = (res.records || []).filter((r, i) => picked[i]);
+    if (joinRecords.length) await dlvJoinAfterRecord(joinRecords);
   } catch (e) {
     $("recordError").textContent = e.message;
     if (/合言葉/.test(e.message)) logout();
@@ -538,6 +549,18 @@ function start() {
     if (b) undo(b.dataset.undo, b.dataset.name);
   });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) { loadTonight(); loadDelivery(); } });
+  $("dlvPick").addEventListener("change", (e) => {
+    const i = e.target.dataset?.dlvPick;
+    if (i === undefined || !chips[Number(i)]) return;
+    chips[Number(i)].dlv = e.target.checked;
+    renderDlvPick();
+  });
+  $("dlvPick").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-dlv-all]");
+    if (!b) return;
+    chips.forEach((c) => { c.dlv = b.dataset.dlvAll === "1"; });
+    renderDlvPick();
+  });
   $("dlvInput").addEventListener("input", dlvSearch);
   $("dlvInput").addEventListener("keydown", (e) => {
     if (e.key !== "Enter" || e.isComposing) return;

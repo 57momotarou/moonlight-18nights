@@ -410,3 +410,7 @@ body.is-demo .tabs{top:42px}
 .list .li.dlv-done-row{opacity:.75}
 .dlv-check{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);font-size:14px;cursor:pointer}
 .dlv-check input{width:20px;height:20px;accent-color:#d6b365}
+.dlv-pick{margin:0 0 12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line2)}
+.dlv-pick-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:14px;color:var(--gold2)}
+.dlv-pick-list{display:flex;flex-wrap:wrap;gap:6px}
+.dlv-pick .dlv-check{margin:0;padding:6px 10px}
