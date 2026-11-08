@@ -122,7 +122,7 @@ function renderDelivery(force = false) {
   dlvShown = key;
   const body = d.stage >= 4 ? dlvStage4(d) : d.stage === 3 ? dlvStage3(d) : d.stage === 2 ? dlvStage2(d) : dlvStage1(d);
   root.innerHTML = dlvIdCard(d) + body;
-  dlvHydrate(root).then(() => { if (d.stage >= 4) dlvAfterDoneShown(); });
+  dlvHydrate(root);
   if (d.stage === 3) ["slip", "piece"].forEach((n) => dlvAssetUrl(dlvAsset(n)).catch(() => {}));   // 演出ですぐ出せるように先に開いておく
   if (d.stage >= 4) dlvRenderCert();
 }
@@ -249,15 +249,10 @@ function dlvMatchedText() {
 
 function dlvMergeHtml(state) {
   const p = (dlvAsset("piece") || {}).pos || [0, 0.73, 1];
-  const np = dlvAsset("namepatch");
-  const npos = np && np.pos ? np.pos : null;
   return `<div class="dlv-merge ${state}" id="dlvMerge">
       <img class="torn" data-dlv="slip" alt="注文票">
       <img class="piece" data-dlv="piece" alt="" style="left:${(p[0] * 100).toFixed(3)}%;top:${(p[1] * 100).toFixed(3)}%;width:${(p[2] * 100).toFixed(3)}%">
       <div class="seam" style="top:${(p[1] * 100 - 4).toFixed(2)}%"></div>
-      ${npos ? `<img class="namepatch" data-dlv="namepatch" alt="" style="left:${(npos[0] * 100).toFixed(3)}%;top:${(npos[1] * 100).toFixed(3)}%;width:${(npos[2] * 100).toFixed(3)}%;height:${(npos[3] * 100).toFixed(3)}%">
-      <canvas class="nametext" id="dlvNameCanvas"></canvas>
-      <div class="nameglow" style="top:${((npos[1] + npos[3] / 2) * 100).toFixed(2)}%"></div>` : ""}
     </div>`;
 }
 
@@ -268,7 +263,6 @@ function dlvStage4(d) {
       <div class="dlv-eyebrow center">DELIVERED</div>
       <h2 class="center">${cakeEsc(dlvT("done_title"))}</h2>
       ${dlvMergeHtml("merged")}
-      <p class="small muted center dlv-name-note" id="dlvNameNote">${cakeEsc(dlvT("name_note"))}</p>
       <div class="dlv-done-lines">${lines.map((l) => `<p>${cakeEsc(l)}</p>`).join("")}</div>
     </section>
     <section class="card dlv-reward">
@@ -433,48 +427,6 @@ async function dlvMatch(btn) {
   await dlvWait(700);
   m.insertAdjacentHTML("afterend", `<div class="appear">${dlvMatchedText()}</div>`);
   dlvBusy = false;
-}
-
-// 段階4の演出（はじめて見るときだけゆっくり）
-async function dlvAfterDoneShown() {
-  const m = $("dlvMerge");
-  const cv = $("dlvNameCanvas");
-  const np = dlvAsset("namepatch");
-  if (!m || !cv || !np || !np.text) return;
-  await dlvDrawName(cv, np.text);
-  if (dlvFlag("revealed")) {
-    m.classList.add("named", "instant");
-    return;
-  }
-  await dlvWait(700);
-  m.classList.add("named");
-  dlvFlag("revealed", true);
-  const note = $("dlvNameNote");
-  if (note) note.classList.add("show");
-}
-
-async function dlvDrawName(cv, t) {
-  const rect = cv.getBoundingClientRect();
-  const W = Math.max(1, Math.round(rect.width * (window.devicePixelRatio || 1)));
-  const H = Math.max(1, Math.round(rect.height * (window.devicePixelRatio || 1)));
-  cv.width = W;
-  cv.height = H;
-  const name = album.name || "";
-  const font = (px) => `400 ${px}px "Klee One","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif`;
-  try { await document.fonts.load(font(40), `${name}様`); } catch {}
-  const ctx = cv.getContext("2d");
-  let px = t.px * W;
-  const maxW = t.maxw * W;
-  ctx.font = font(px);
-  let text = `${name}　様`;
-  if (ctx.measureText(text).width > maxW) text = name;
-  while (ctx.measureText(text).width > maxW && px > t.px * W * 0.55) {
-    px *= 0.94;
-    ctx.font = font(px);
-  }
-  ctx.fillStyle = "#39332e";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(text, t.x * W, t.base * H);
 }
 
 // ---------- 配達完了証 ----------
