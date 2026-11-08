@@ -414,3 +414,7 @@ body.is-demo .tabs{top:42px}
 .dlv-pick-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:14px;color:var(--gold2)}
 .dlv-pick-list{display:flex;flex-wrap:wrap;gap:6px}
 .dlv-pick .dlv-check{margin:0;padding:6px 10px}
+.staff-tabs{grid-template-columns:repeat(2,1fr);margin-top:4px}
+.staff-tabs .tab-t{font-size:15px}
+.staff-tabs .tab.has-news:not(.active) .tab-s{color:#ffcf6b;font-weight:700}
+.staff-tabs .tab.has-news:not(.active){box-shadow:0 0 0 1px rgba(255,207,107,.6)}

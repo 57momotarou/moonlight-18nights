@@ -143,10 +143,11 @@ function openDesk() {
   showCard("deskView");
   renderBadge();
   loadTonight();
+  setDeskTab(cakeStore("moonlight-staff-desk-tab") === "dlv" ? "dlv" : "cake");
   loadDelivery();
   clearInterval(dlvPoll);
   dlvPoll = setInterval(() => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) loadDelivery(); }, 20000);
-  $("nameInput").focus();
+  if (!$("nameInput").closest(".hidden")) $("nameInput").focus();
 }
 
 function showStaffPick() {
@@ -346,6 +347,8 @@ async function loadDelivery() {
     const waiting = dlvRows.filter((r) => r.stage === 3).length;
     const done = dlvRows.filter((r) => r.stage >= 4).length;
     $("dlvCount").textContent = `${dlvRows.length}人${waiting ? `・完了待ち${waiting}` : ""}${done ? `・完了${done}` : ""}`;
+    $("dlvTabSub").textContent = waiting ? `完了待ち ${waiting}人` : `参加 ${dlvRows.length}人`;
+    document.querySelector('.staff-tabs [data-desk="dlv"]').classList.toggle("has-news", waiting > 0);
     $("dlvList").innerHTML = dlvRows.map((r, i) => {
       const meta = r.stage >= 4
         ? `✓ 完了 ${dlvTime(r.done_at)} ・ ${cakeEsc(r.done_by || "")}`
@@ -475,6 +478,19 @@ async function dlvLeave(r) {
   }
 }
 
+// 受付の切り替え（ケーキセット／ケーキ便）。選んだほうを覚えておく
+function setDeskTab(tab) {
+  document.querySelectorAll(".staff-tabs [data-desk]").forEach((b) => {
+    const on = b.dataset.desk === tab;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", String(on));
+  });
+  document.querySelectorAll("[data-desk-panel]").forEach((p) => p.classList.toggle("hidden", p.dataset.deskPanel !== tab));
+  cakeStore("moonlight-staff-desk-tab", tab);
+  if (tab === "dlv") loadDelivery();
+  window.scrollTo({ top: 0 });
+}
+
 // ---------- 起動 ----------
 function start() {
   if (CAKE_TEST) {
@@ -560,6 +576,10 @@ function start() {
     if (!b) return;
     chips.forEach((c) => { c.dlv = b.dataset.dlvAll === "1"; });
     renderDlvPick();
+  });
+  document.querySelector(".staff-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-desk]");
+    if (b) setDeskTab(b.dataset.desk);
   });
   $("dlvInput").addEventListener("input", dlvSearch);
   $("dlvInput").addEventListener("keydown", (e) => {
