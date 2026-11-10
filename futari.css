@@ -90,51 +90,57 @@
 .ft-more>summary{list-style:none;cursor:pointer;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--gold2);font-size:14px;margin-bottom:12px}
 .ft-more>summary::-webkit-details-marker{display:none}
 
-/* 箱（--bw＝箱の場所の幅）。白いケーキの箱をななめ上から見た形。ふたが奥へ開き、前の面が手前に倒れて中のケーキが見える */
+/* 箱（--bw＝箱の場所の幅）。紺に金の線のケーキの箱（中はクリーム色）をななめ上から見た形。ふたが奥へ開き、前の面が手前に倒れて中のケーキが見える */
 .ft-ready h2,.ft-gift h2{margin-bottom:4px}
-.ft-box{--bw:min(80vw,300px);--w:calc(var(--bw)*.54);--d:calc(var(--bw)*.345);--h:calc(var(--bw)*.29);position:relative;width:var(--bw);height:calc(var(--bw)*.64);margin:10px auto 8px;perspective:calc(var(--bw)*5);perspective-origin:50% 0%;transition:height .9s cubic-bezier(.2,.8,.25,1)}
+.ft-box{--bw:min(86vw,330px);--w:calc(var(--bw)*.54);--d:calc(var(--bw)*.345);--h:calc(var(--bw)*.29);position:relative;width:var(--bw);height:calc(var(--bw)*.64);margin:10px auto 8px;perspective:calc(var(--bw)*5);perspective-origin:50% 0%;transition:height .9s cubic-bezier(.2,.8,.25,1)}
 .ft-box.opening,.ft-box.opened{height:calc(var(--bw)*1.05)}
 .ft-box-3d{position:absolute;left:50%;top:calc(var(--bw)*.36);width:0;height:0;transform-style:preserve-3d;transform:rotateX(-20deg) rotateY(-26deg)}
 .ft-box.opening .ft-box-3d,.ft-box.opened .ft-box-3d{top:calc(var(--bw)*.6)}
 .ft-box-3d>*{position:absolute;transform-style:preserve-3d}
-/* 面：中心からの位置で置く。色は外側＝明るい白、内側＝少し影 */
+/* 面：中心からの位置で置く。外側＝紺（金の二重線・星）、内側＝クリーム色（金の細線） */
 .ft-f{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .ft-box-floor{width:var(--w);height:var(--d);margin:calc(var(--d)/-2) 0 0 calc(var(--w)/-2);transform:translateY(calc(var(--h)/2)) rotateX(90deg)}
-.ft-box-floor .ft-f{backface-visibility:visible;background:radial-gradient(28% 32% at 30% 55%,rgba(70,55,40,.35),rgba(70,55,40,0) 70%),radial-gradient(28% 32% at 70% 55%,rgba(70,55,40,.35),rgba(70,55,40,0) 70%),linear-gradient(180deg,#d9d1c2,#efe9de)}
+.ft-box-floor .ft-f{backface-visibility:visible;background:linear-gradient(180deg,#ddd5c5,#efe9dd)}
 .ft-box-back{width:var(--w);height:var(--h);margin:calc(var(--h)/-2) 0 0 calc(var(--w)/-2);transform:translateZ(calc(var(--d)/-2))}
-.ft-box-back .ft-f{backface-visibility:visible;background:linear-gradient(180deg,#cfc6b6,#e6dfd2)}
+.ft-box-back .ft-f{backface-visibility:visible;background:linear-gradient(180deg,#d8d0c0,#ece6da)}
 .ft-box-left,.ft-box-right{width:var(--d);height:var(--h);margin:calc(var(--h)/-2) 0 0 calc(var(--d)/-2)}
 .ft-box-left{transform:translateX(calc(var(--w)/-2)) rotateY(-90deg)}
 .ft-box-right{transform:translateX(calc(var(--w)/2)) rotateY(90deg)}
-.ft-box-left .ft-f.o{background:linear-gradient(90deg,#d8d1c4,#ece6db)}
-.ft-box-left .ft-f.i{transform:rotateY(180deg);background:linear-gradient(90deg,#e4ddd0,#cfc6b7)}
-.ft-box-right .ft-f.o{background:linear-gradient(90deg,#f6f2ea,#e7e0d4)}
-.ft-box-right .ft-f.i{transform:rotateY(180deg);background:linear-gradient(90deg,#d6cebf,#e8e1d5)}
+/* 金の二重線（外側）と細線（内側） */
+.ft-box-3d .ft-f.o::before,.ft-box-3d .ft-f.o::after,.ft-box-front .ft-f.i::before,.ft-box-lid .ft-f.i::before{content:"";position:absolute;pointer-events:none}
+.ft-box-3d .ft-f.o::before{inset:calc(var(--bw)*.011);border:1px solid rgba(214,179,101,.9)}
+.ft-box-3d .ft-f.o::after{inset:calc(var(--bw)*.019);border:1px solid rgba(214,179,101,.55)}
+.ft-box-front .ft-f.i::before,.ft-box-lid .ft-f.i::before{inset:calc(var(--bw)*.016);border:1px solid rgba(201,163,90,.6)}
+.ft-box-left .ft-f.o{background:radial-gradient(circle at 18% 30%,rgba(255,240,200,.8) 0 .6px,transparent 1px),radial-gradient(circle at 72% 22%,rgba(255,240,200,.7) 0 .5px,transparent 1px),radial-gradient(circle at 40% 78%,rgba(255,240,200,.6) 0 .5px,transparent 1px),radial-gradient(circle at 88% 64%,rgba(255,240,200,.7) 0 .6px,transparent 1px),linear-gradient(160deg,#24335f,#16213f 70%,#121b35)}
+.ft-box-left .ft-f.i{transform:rotateY(180deg);background:linear-gradient(90deg,#e6dfd2,#d3cabb)}
+.ft-box-right .ft-f.o{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M22 8a12 12 0 1 0 10 18A10 10 0 1 1 22 8z' fill='%23d6b365'/%3E%3Cpath d='M31 9l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z' fill='%23d6b365'/%3E%3C/svg%3E") 50% 42%/26% auto no-repeat,radial-gradient(circle at 18% 30%,rgba(255,240,200,.8) 0 .6px,transparent 1px),radial-gradient(circle at 72% 22%,rgba(255,240,200,.7) 0 .5px,transparent 1px),radial-gradient(circle at 40% 78%,rgba(255,240,200,.6) 0 .5px,transparent 1px),radial-gradient(circle at 88% 64%,rgba(255,240,200,.7) 0 .6px,transparent 1px),linear-gradient(160deg,#24335f,#16213f 70%,#121b35)}
+.ft-box-right .ft-f.i{transform:rotateY(180deg);background:linear-gradient(90deg,#d8cfc0,#ebe5d9)}
 /* 前の面（下でつながっていて、手前に倒れる） */
 .ft-box-front{width:var(--w);height:var(--h);margin:calc(var(--h)/-2) 0 0 calc(var(--w)/-2);transform-origin:50% 100%;transform:translateZ(calc(var(--d)/2))}
-.ft-box-front .ft-f.o{background:linear-gradient(180deg,#fffdf9,#f3eee5);box-shadow:inset 0 0 0 1px rgba(170,150,120,.25);display:grid;place-items:center}
-.ft-box-front .ft-f.i{transform:rotateY(180deg);background:linear-gradient(0deg,#ebe4d8,#f6f2ea)}
+.ft-box-front .ft-f.o{background:radial-gradient(circle at 18% 30%,rgba(255,240,200,.8) 0 .6px,transparent 1px),radial-gradient(circle at 72% 22%,rgba(255,240,200,.7) 0 .5px,transparent 1px),radial-gradient(circle at 40% 78%,rgba(255,240,200,.6) 0 .5px,transparent 1px),radial-gradient(circle at 88% 64%,rgba(255,240,200,.7) 0 .6px,transparent 1px),linear-gradient(160deg,#24335f,#16213f 70%,#121b35);display:grid;place-items:center}
+.ft-box-front .ft-f.i{transform:rotateY(180deg);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M22 8a12 12 0 1 0 10 18A10 10 0 1 1 22 8z' fill='%23d6b365'/%3E%3Cpath d='M31 9l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z' fill='%23d6b365'/%3E%3C/svg%3E") 50% 50%/14% auto no-repeat,linear-gradient(180deg,#e9e3d6,#f4efe5)}
 /* ふた（奥でつながっていて、奥へ開く） */
 .ft-box-lid{width:var(--w);height:var(--d);margin:0 0 0 calc(var(--w)/-2);transform-origin:50% 0%;transform:translateY(calc(var(--h)/-2)) translateZ(calc(var(--d)/-2)) rotateX(90deg)}
-.ft-box-lid .ft-f.o{background:linear-gradient(0deg,#fffdf8,#efe9df);box-shadow:inset 0 0 0 1px rgba(170,150,120,.25);display:grid;place-items:center}
-.ft-box-lid .ft-f.i{transform:rotateX(180deg);background:linear-gradient(180deg,#e2dbcd,#f2ede4)}
-.ft-box-emblem{width:calc(var(--bw)*.11);height:calc(var(--bw)*.11);border-radius:50%;display:grid;place-items:center;background:#16234a;color:#f3dfa8;font-size:calc(var(--bw)*.06);line-height:1;box-shadow:0 0 0 2px #e6c77d}
+.ft-box-lid .ft-f.o{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cg stroke='%23d6b365' stroke-width='.8' fill='none' opacity='.9'%3E%3Cpath d='M28 30L48 52L38 78L76 92L100 80'/%3E%3Cpath d='M118 78L138 58L172 52L180 82L146 92L138 58M146 92L140 112'/%3E%3C/g%3E%3Cg fill='%23f3dfa8'%3E%3Ccircle cx='28' cy='30' r='1.8'/%3E%3Ccircle cx='48' cy='52' r='1.6'/%3E%3Ccircle cx='38' cy='78' r='1.5'/%3E%3Ccircle cx='76' cy='92' r='1.6'/%3E%3Ccircle cx='138' cy='58' r='1.6'/%3E%3Ccircle cx='172' cy='52' r='1.8'/%3E%3Ccircle cx='180' cy='82' r='1.5'/%3E%3Ccircle cx='146' cy='92' r='1.6'/%3E%3Ccircle cx='140' cy='112' r='1.4'/%3E%3C/g%3E%3Cpath d='M106 62a14 14 0 1 0 12 22A12 12 0 1 1 106 62z' fill='%23d6b365'/%3E%3Cpath d='M128 66l1.2 2.8 2.8 1.2-2.8 1.2-1.2 2.8-1.2-2.8-2.8-1.2 2.8-1.2z' fill='%23f3dfa8'/%3E%3C/svg%3E") 50% 50%/86% auto no-repeat,radial-gradient(circle at 18% 30%,rgba(255,240,200,.8) 0 .6px,transparent 1px),radial-gradient(circle at 72% 22%,rgba(255,240,200,.7) 0 .5px,transparent 1px),radial-gradient(circle at 40% 78%,rgba(255,240,200,.6) 0 .5px,transparent 1px),radial-gradient(circle at 88% 64%,rgba(255,240,200,.7) 0 .6px,transparent 1px),linear-gradient(160deg,#24335f,#16213f 70%,#121b35)}
+.ft-box-lid .ft-f.i{transform:rotateX(180deg);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M22 8a12 12 0 1 0 10 18A10 10 0 1 1 22 8z' fill='%23d6b365'/%3E%3Cpath d='M31 9l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z' fill='%23d6b365'/%3E%3C/svg%3E") 50% 55%/13% auto no-repeat,linear-gradient(0deg,#ece6da,#f6f2ea)}
 /* ふたの左右の耳（持ち手の穴つき） */
-.ft-box-ear{position:absolute;top:0;width:calc(var(--d)*.55);height:calc(var(--d)*.55);background:linear-gradient(135deg,#f4efe6,#e2dbce);clip-path:polygon(0 0,100% 0,100% 30%,40% 100%,0 100%);backface-visibility:visible}
-.ft-box-ear::after{content:"";position:absolute;left:22%;top:20%;width:34%;height:14%;border-radius:9px;background:#b9b0a1}
-.ft-box-ear{transition:opacity .35s .35s}
+.ft-box-ear{position:absolute;top:0;width:calc(var(--d)*.55);height:calc(var(--d)*.55);background:linear-gradient(135deg,#f3eee4,#e0d8ca);clip-path:polygon(0 0,100% 0,100% 30%,40% 100%,0 100%);backface-visibility:visible;transition:opacity .35s .35s}
+.ft-box-ear::after{content:"";position:absolute;left:22%;top:20%;width:34%;height:14%;border-radius:9px;background:#c4bba9}
 .ft-box:not(.opening):not(.opened) .ft-box-ear{opacity:0;transition:none}
 .ft-box-ear.l{left:0;transform-origin:0 0;transform:rotateY(90deg)}
 .ft-box-ear.r{right:0;transform-origin:100% 0;transform:rotateY(-90deg) scaleX(-1)}
 /* ケーキ：床に立てて、こちらを向かせる */
-.ft-box-cakes{width:var(--w);height:0;margin-left:calc(var(--w)/-2);transform:translateY(calc(var(--h)/2 - 1px)) translateZ(calc(var(--d)*.12))}
-.ft-box-cakes img{position:absolute;bottom:0;width:calc(var(--w)*.44);height:calc(var(--h)*.98);object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;transform:rotateY(26deg) rotateX(20deg);filter:drop-shadow(0 2px 3px rgba(60,45,30,.35))}
-.ft-box-cakes img.c1{left:calc(var(--w)*.04)}
-.ft-box-cakes img.c2{right:calc(var(--w)*.06)}
+.ft-box-cakes{width:0;height:0;transform:translateY(calc(var(--h)/2 - .5px))}
+.ft-box-cakes img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 .ft-box-cakes img:not([src]){visibility:hidden}
+.ft-cake,.ft-cake-sh{position:absolute;--cw:calc(var(--w)*.44)}
+.ft-cake{width:var(--cw);height:calc(var(--h)*.92);left:calc(var(--cw)/-2);bottom:0;transform-origin:50% 100%;transform:translateX(var(--x)) translateZ(var(--z)) rotateY(26deg)}
+.ft-cake-sh{width:calc(var(--cw)*1.05);height:calc(var(--cw)*.62);left:calc(var(--cw)*-.525);top:calc(var(--cw)*-.31);transform:translateX(var(--x)) translateZ(var(--z)) rotateX(90deg);background:radial-gradient(closest-side,rgba(70,50,30,.55),rgba(70,50,30,.25) 55%,rgba(70,50,30,0))}
+.ft-cake.c1,.ft-cake-sh.c1{--x:calc(var(--w)*-.21);--z:calc(var(--d)*.1)}
+.ft-cake.c2,.ft-cake-sh.c2{--x:calc(var(--w)*.18);--z:calc(var(--d)*.2)}
 /* 名前のラベル（前の面） */
-.ft-box-label{width:88%;max-height:90%;overflow:hidden;padding:3px 5px 4px;border-radius:5px;background:linear-gradient(180deg,#1e2d58,#141f40);color:#f4e7c4;text-align:center;box-shadow:inset 0 0 0 1px rgba(214,179,101,.6)}
-.ft-box-label small{display:block;font-family:var(--mincho);font-size:9px;letter-spacing:.12em;color:#e0c27f;line-height:1.3}
+.ft-box-label{width:76%;max-height:62%;overflow:hidden;padding:3px 5px 4px;border-radius:3px;background:linear-gradient(180deg,#fbf6ea,#efe5cf);color:#1b2850;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.ft-box-label small{display:block;font-family:var(--mincho);font-size:8.5px;letter-spacing:.1em;color:#b08a3e;line-height:1.3}
 .ft-box-label b{display:block;font-family:var(--mincho);font-weight:600;font-size:clamp(10.5px,3.2vw,12.5px);line-height:1.4;overflow-wrap:anywhere}
 .ft-box-label b span{display:inline-block;max-width:100%}
 .ft-box-label.long b{font-size:clamp(9.5px,2.8vw,11px)}
@@ -156,8 +162,8 @@
 .ft-box.opened .ft-box-lid{transform:translateY(calc(var(--h)/-2)) translateZ(calc(var(--d)/-2)) rotateX(196deg)}
 .ft-box.opened .ft-box-front{transform:translateZ(calc(var(--d)/2)) rotateX(-90deg)}
 .ft-box.opening .ft-box-glow,.ft-box.opened .ft-box-glow{opacity:1;transform:translateX(-50%) scale(1)}
-.ft-box.opening .ft-box-cakes img{animation:ftShine 1.6s .6s ease-out both}
-@keyframes ftShine{0%{filter:brightness(.5) drop-shadow(0 2px 3px rgba(60,45,30,.35))}100%{filter:drop-shadow(0 2px 3px rgba(60,45,30,.35))}}
+.ft-box.opening .ft-cake img{animation:ftShine 1.6s .6s ease-out both}
+@keyframes ftShine{0%{filter:brightness(.55)}100%{filter:none}}
 .ft-wait-msg{min-height:1.4em;font-size:14px;margin:4px 0 12px;color:#d9e0ee}
 .ft-hot{color:#f0c3cf}
 

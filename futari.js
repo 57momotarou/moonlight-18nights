@@ -610,8 +610,8 @@ function ftBoxHtml(state) {
       <div class="ft-box-back"><div class="ft-f"></div></div>
       <div class="ft-box-left"><div class="ft-f o"></div><div class="ft-f i"></div></div>
       <div class="ft-box-right"><div class="ft-f o"></div><div class="ft-f i"></div></div>
-      <div class="ft-box-cakes"><img class="c1" data-ft-cake="0" alt=""><img class="c2" data-ft-cake="1" alt=""></div>
-      <div class="ft-box-lid"><div class="ft-f o"><span class="ft-box-emblem">☾</span></div><div class="ft-f i"></div><div class="ft-box-ear l"></div><div class="ft-box-ear r"></div></div>
+      <div class="ft-box-cakes"><div class="ft-cake-sh c1"></div><div class="ft-cake-sh c2"></div><div class="ft-cake c1"><img data-ft-cake="0" alt=""></div><div class="ft-cake c2"><img data-ft-cake="1" alt=""></div></div>
+      <div class="ft-box-lid"><div class="ft-f o"></div><div class="ft-f i"></div><div class="ft-box-ear l"></div><div class="ft-box-ear r"></div></div>
       <div class="ft-box-front"><div class="ft-f o"><div class="ft-box-label${size}"><small>Moonlight より</small><b><span>${cakeEsc(a)}さん・</span><span>${cakeEsc(b)}さんへ</span></b></div></div><div class="ft-f i"></div></div>
     </div>
     <div class="ft-count" id="ftCount" aria-live="assertive"></div>
