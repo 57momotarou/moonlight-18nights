@@ -7,7 +7,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=34">
+<link rel="stylesheet" href="album.css?v=35">
+<link rel="stylesheet" href="futari.css?v=35">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -58,9 +59,10 @@
     </div>
     <div class="who-line">受付：<b id="staffName"></b>　<button class="linklike" type="button" id="changeStaffBtn">変更</button></div>
 
-    <nav class="tabs staff-tabs" role="tablist" aria-label="受付の切り替え">
+    <nav class="tabs staff-tabs three" role="tablist" aria-label="受付の切り替え">
       <button type="button" role="tab" class="tab active" data-desk="cake" aria-selected="true"><span class="tab-t">🍰 ケーキセット</span><span class="tab-s">記録・今夜の一覧</span></button>
       <button type="button" role="tab" class="tab" data-desk="dlv" aria-selected="false"><span class="tab-t">📮 ケーキ便</span><span class="tab-s" id="dlvTabSub">参加・完了</span></button>
+      <button type="button" role="tab" class="tab" data-desk="futari" aria-selected="false"><span class="tab-t">🌙 ふたりの月</span><span class="tab-s" id="fsTabSub">参加・受け取り</span></button>
     </nav>
 
     <div data-desk-panel="cake">
@@ -121,12 +123,42 @@
       <div class="list" id="dlvList"></div>
     </section>
     </div>
+
+    <!-- 「ふたりの月」（カップル・夫婦向け） -->
+    <div data-desk-panel="futari" class="hidden">
+    <section class="card" id="fsCard">
+      <div class="topline" style="margin-bottom:6px">
+        <h2 style="margin:0">🌙 ふたりの月</h2>
+        <span class="small muted" id="fsCount"></span>
+      </div>
+      <p class="small muted" style="margin:0 0 8px">カップル・夫婦で「参加したい」と言ってくれたふたりを登録します。参加は無料です。ふたりのアルバムに「ふたり」のタブが増えます。アルバムがない人には番号を発行します。</p>
+      <div class="field">
+        <label for="fsInput0">ひとりめ（名前か4桁の番号）</label>
+        <input type="text" id="fsInput0" maxlength="40" autocomplete="off" enterkeyhint="done">
+        <div class="fs-picked" id="fsPicked0"></div>
+        <div class="suggest" id="fsSuggest0"></div>
+      </div>
+      <div class="field">
+        <label for="fsInput1">ふたりめ（名前か4桁の番号）</label>
+        <input type="text" id="fsInput1" maxlength="40" autocomplete="off" enterkeyhint="done">
+        <div class="fs-picked" id="fsPicked1"></div>
+        <div class="suggest" id="fsSuggest1"></div>
+      </div>
+      <button class="btn block" type="button" id="fsJoinBtn" disabled>ふたりで参加を登録</button>
+      <p class="error" id="fsError"></p>
+      <div class="result hidden" id="fsResult"></div>
+      <h3 style="margin:14px 0 6px;font-family:var(--mincho);color:var(--gold2)">参加しているふたり</h3>
+      <div class="dlv-guide small">箱を開けたふたりが来たら、🎁 のケーキボックスを作って渡し、「受け取り」を押してください（お代はいただきません）。渡すときに「ゲームの写真は街が終わると見られなくなるかもしれないので、アルバムを画像で保存しておいてくださいね」と声をかけてください。</div>
+      <div class="list" id="fsList"></div>
+    </section>
+    </div>
   </section>
 </main>
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=34"></script>
-<script src="staff.js?v=34"></script>
+<script src="cake-api.js?v=35"></script>
+<script src="futari-staff.js?v=35"></script>
+<script src="staff.js?v=35"></script>
 </body>
 </html>

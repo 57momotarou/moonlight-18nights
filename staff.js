@@ -1,5 +1,6 @@
 // staff.js — 従業員用ケーキ受付：合言葉でログイン → 自分の名前を選ぶ → 名前か番号で選んで記録。新しい人には4桁の番号を発行。
 // 謎解き「宛先不明のケーキ便」の参加登録と、正解済みの人の「完了」（報酬を渡したら押す）もここ。
+// 「ふたりの月」（カップル・夫婦向け）の参加登録と受け取りは futari-staff.js。
 "use strict";
 
 const PASS_KEY = "moonlight-cake-staff-pass";
@@ -143,10 +144,12 @@ function openDesk() {
   showCard("deskView");
   renderBadge();
   loadTonight();
-  setDeskTab(cakeStore("moonlight-staff-desk-tab") === "dlv" ? "dlv" : "cake");
+  const savedDesk = cakeStore("moonlight-staff-desk-tab");
+  setDeskTab(["dlv", "futari"].includes(savedDesk) ? savedDesk : "cake");
   loadDelivery();
+  fsLoad();
   clearInterval(dlvPoll);
-  dlvPoll = setInterval(() => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) loadDelivery(); }, 20000);
+  dlvPoll = setInterval(() => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) { loadDelivery(); fsLoad(); } }, 20000);
   if (!$("nameInput").closest(".hidden")) $("nameInput").focus();
 }
 
@@ -478,7 +481,7 @@ async function dlvLeave(r) {
   }
 }
 
-// 受付の切り替え（ケーキセット／ケーキ便）。選んだほうを覚えておく
+// 受付の切り替え（ケーキセット／ケーキ便／ふたりの月）。選んだほうを覚えておく
 function setDeskTab(tab) {
   document.querySelectorAll(".staff-tabs [data-desk]").forEach((b) => {
     const on = b.dataset.desk === tab;
@@ -488,6 +491,7 @@ function setDeskTab(tab) {
   document.querySelectorAll("[data-desk-panel]").forEach((p) => p.classList.toggle("hidden", p.dataset.deskPanel !== tab));
   cakeStore("moonlight-staff-desk-tab", tab);
   if (tab === "dlv") loadDelivery();
+  if (tab === "futari") fsLoad();
   window.scrollTo({ top: 0 });
 }
 
@@ -564,7 +568,7 @@ function start() {
     const b = e.target.closest("[data-undo]");
     if (b) undo(b.dataset.undo, b.dataset.name);
   });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) { loadTonight(); loadDelivery(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && pass && staff && !$("deskView").classList.contains("hidden")) { loadTonight(); loadDelivery(); fsLoad(); } });
   $("dlvPick").addEventListener("change", (e) => {
     const i = e.target.dataset?.dlvPick;
     if (i === undefined || !chips[Number(i)]) return;
@@ -606,6 +610,8 @@ function start() {
     else if (b.dataset.dlvUndo !== undefined) dlvUndo(r);
     else if (b.dataset.dlvLeave !== undefined) dlvLeave(r);
   });
+
+  fsInit();
 
   // 合言葉を覚えていればログイン画面は飛ばすが、名前はページを開くたびに選ぶ
   loadEmployees();

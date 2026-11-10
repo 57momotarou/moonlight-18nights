@@ -1,4 +1,4 @@
-// album.js — お客さん用ページ：夜空（誰でも）と、4桁の番号で開くアルバム（図鑑・画像と飾り・寄せ書きのタブ。ケーキ便の参加者にはケーキ便のタブ＝delivery.js）。画像は album-image.js。
+// album.js — お客さん用ページ：夜空（誰でも）と、4桁の番号で開くアルバム（図鑑・画像と飾り・寄せ書きのタブ。ケーキ便の参加者にはケーキ便のタブ＝delivery.js、ふたりの月の参加者にはふたりのタブ＝futari.js）。画像は album-image.js。
 "use strict";
 
 const CODE_KEY = "moonlight-album-code";
@@ -293,6 +293,7 @@ function setTab(tab) {
   if (tab === "images") renderImagesTab();
   if (tab === "delivery") renderDelivery();
   else renderDeliveryTab();
+  futariOnTab(tab);
 }
 
 // みんなの寄せ書き（最終夜から。アルバムを開いた人だけに届く）
@@ -382,6 +383,7 @@ function renderAlbum() {
   if (activeTab === "images") renderImagesTab();
   renderDeliveryTab();
   if (activeTab === "delivery") renderDelivery();
+  futariOnAlbum();
 }
 
 // ---------- カードの詳細と画像保存 ----------
@@ -566,6 +568,7 @@ async function openAlbum(c, { quiet = false } = {}) {
     $("codeError").textContent = "";
     if (pub && album.test === pub.test) { pub.stars = album.stars; pub.stage = album.stage; renderSky(); }
     renderAlbum();
+    futariLoad();
     return true;
   } catch (e) {
     if (!quiet) $("codeError").textContent = e.message;
@@ -581,6 +584,7 @@ function closeAlbum() {
   $("albumView").classList.add("hidden");
   renderTonightCard();
   dlvReset();
+  futariReset();
   setTab("collection");
   $("certBody").innerHTML = "";
   $("openCard").classList.remove("hidden");
@@ -622,6 +626,7 @@ function startPolling() {
 function start() {
   paintBgStars();
   dlvInit();
+  futariInit();
   if (CAKE_TEST) {
     cakeMarkDemo();
     $("testBanner").classList.remove("hidden");
