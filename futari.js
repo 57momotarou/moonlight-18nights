@@ -274,6 +274,7 @@ function renderFutari(force = false) {
   else body = ftOpenedHtml();
   root.innerHTML = ftHeadHtml(st) + body;
   ftHydrate(root);
+  ftFitLabel();
   if (st === "ready") ftSyncWaitUi();
   if ((st === "opened" || st === "received") && !ftFlag("revealed")) ftPlayReveal();
 }
@@ -603,18 +604,31 @@ function ftBoxHtml(state) {
   const size = len > 24 ? " xlong" : len > 13 ? " long" : "";
   return `<div class="ft-box ${state}" id="ftBox">
     <div class="ft-box-glow"></div>
+    <div class="ft-box-shadow"></div>
     <div class="ft-box-3d">
-      <div class="ft-box-top"><span class="ft-box-emblem">☾</span></div>
-      <div class="ft-box-body">
-        <div class="ft-box-in"><div class="ft-box-cakes"><img class="c1" data-ft-cake="0" alt=""><img class="c2" data-ft-cake="1" alt=""></div></div>
-        <div class="ft-box-flap">
-          <div class="ft-flap-out"><div class="ft-box-label${size}"><small>Moonlight より</small><b><span>${cakeEsc(a)}さん・</span><span>${cakeEsc(b)}さんへ</span></b></div></div>
-          <div class="ft-flap-in"></div>
-        </div>
-      </div>
+      <div class="ft-box-floor"><div class="ft-f"></div></div>
+      <div class="ft-box-back"><div class="ft-f"></div></div>
+      <div class="ft-box-left"><div class="ft-f o"></div><div class="ft-f i"></div></div>
+      <div class="ft-box-right"><div class="ft-f o"></div><div class="ft-f i"></div></div>
+      <div class="ft-box-cakes"><img class="c1" data-ft-cake="0" alt=""><img class="c2" data-ft-cake="1" alt=""></div>
+      <div class="ft-box-lid"><div class="ft-f o"><span class="ft-box-emblem">☾</span></div><div class="ft-f i"></div><div class="ft-box-ear l"></div><div class="ft-box-ear r"></div></div>
+      <div class="ft-box-front"><div class="ft-f o"><div class="ft-box-label${size}"><small>Moonlight より</small><b><span>${cakeEsc(a)}さん・</span><span>${cakeEsc(b)}さんへ</span></b></div></div><div class="ft-f i"></div></div>
     </div>
     <div class="ft-count" id="ftCount" aria-live="assertive"></div>
   </div>`;
+}
+
+// 箱の前の面のラベル：名前が長いときは、入るまで字を小さくする
+function ftFitLabel() {
+  const label = document.querySelector("#ftBox .ft-box-label");
+  const names = label && label.querySelector("b");
+  if (!names || !label.clientHeight) return;
+  let size = parseFloat(getComputedStyle(names).fontSize);
+  while (label.scrollHeight > label.clientHeight + 1 && size > 7) {
+    size -= 0.5;
+    names.style.fontSize = `${size}px`;
+    names.style.lineHeight = "1.3";
+  }
 }
 function ftReadyHtml() {
   return `<section class="card ft-ready">
@@ -747,7 +761,7 @@ function ftOpenedHtml() {
       <div class="ft-after${hide}">
         <div class="ft-cake-names"><span>${cakeEsc(cakes[0] ? cakes[0].name : "")}</span><span>${cakeEsc(cakes[1] ? cakes[1].name : "")}</span></div>
         ${recv}
-        <button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span>・<span class="nw">保存する</span></button>
+        <button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span><span class="nw">・保存する</span></button>
       </div>
     </section>
     <div class="ft-after${hide}">${ftAlbumHtml()}</div>`;
