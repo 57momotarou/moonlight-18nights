@@ -1,5 +1,5 @@
 // futari-staff.js — 受付の「ふたりの月」：カップル・夫婦のふたりの参加登録と、進み具合の一覧。
-// 箱を開けたふたりが来たら、渡すケーキボックスを確かめて「受け取り」（お代はいただかない）。staff.js の start から fsInit を呼ぶ。
+// 箱を開けたふたりが来たら、渡すケーキ（2個セット）を確かめて「受け取り」（お代はいただかない）。staff.js の start から fsInit を呼ぶ。
 "use strict";
 
 const FS_TYPE_NAMES = { yoizuki: "宵月", izayoi: "十六夜", ariake: "有明", oborozuki: "朧月", matsuyoi: "待宵" };
@@ -11,7 +11,7 @@ const fsSeq = [0, 0];
 let fsBusy = false;
 
 function fsBoxName(type) {
-  return FS_TYPE_NAMES[type] ? `${FS_TYPE_NAMES[type]}のケーキボックス` : "";
+  return FS_TYPE_NAMES[type] ? `${FS_TYPE_NAMES[type]}のケーキ（2個セット）` : "";
 }
 
 function fsStatus(r) {

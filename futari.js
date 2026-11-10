@@ -1,6 +1,6 @@
 // futari.js — 「ふたりの月」：受付で参加を登録したふたり（カップル・夫婦）のアルバムにだけ出るタブ。
 // 流れ：心理テスト（ひとりずつ・相手には見えない）→ ふたりの月のタイプとお題3つ → お題の写真のURLを貼る（相手の写真は開けるまで見えない）
-//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 箱からケーキ・ふたりのアルバム → 店頭でケーキボックスを受け取る。
+//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 箱からケーキ・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
 // 進み具合・相手の写真・ケーキの名前と画像の鍵は Supabase から届く（cake_futari ほか）。ケーキの画像は assets/*.bin（暗号化済み）。
 "use strict";
 
@@ -284,7 +284,7 @@ function ftHeadHtml(st) {
   const [a, b] = ftPairNames();
   return `<section class="card ft-id">
     <div class="ft-id-top"><span class="ft-eyebrow">FUTARI NO TSUKI ・ ふたりの月</span><span class="ft-no">No.${String(ft.no).padStart(3, "0")}</span></div>
-    <div class="ft-id-names"><span>${cakeEsc(a)}</span><i class="ft-amp">&amp;</i><span>${cakeEsc(b)}</span></div>
+    <div class="ft-id-names${[...`${a}${b}`].length > 20 ? " long" : ""}"><span>${cakeEsc(a)}</span><i class="ft-amp">&amp;</i><span>${cakeEsc(b)}</span></div>
     ${ft.type ? `<div class="ft-id-type">${ftMoonHtml(ft.type, 22)}${FT_TYPES[ft.type].name}のふたり</div>` : ""}
     <ol class="dlv-steps ft-steps">${steps.map((s, i) => {
       const n = i + 1;
@@ -599,16 +599,23 @@ function ftZoom(ref) {
 // ---------- 箱 ----------
 function ftBoxHtml(state) {
   const [a, b] = ftPairNames();
+  const len = [...`${a}${b}`].length;
+  const size = len > 24 ? " xlong" : len > 13 ? " long" : "";
   return `<div class="ft-box ${state}" id="ftBox">
     <div class="ft-box-glow"></div>
-    <div class="ft-box-inner"></div>
-    <div class="ft-box-cakes"><img class="c1" data-ft-cake="0" alt=""><img class="c2" data-ft-cake="1" alt=""></div>
-    <div class="ft-box-lid"><span class="ft-box-ribbon"></span><span class="ft-box-emblem">☾</span></div>
-    <div class="ft-box-front"><div class="ft-box-label"><small>Moonlight より</small><b>${cakeEsc(a)}さん・${cakeEsc(b)}さんへ</b></div></div>
+    <div class="ft-box-3d">
+      <div class="ft-box-top"><span class="ft-box-emblem">☾</span></div>
+      <div class="ft-box-body">
+        <div class="ft-box-in"><div class="ft-box-cakes"><img class="c1" data-ft-cake="0" alt=""><img class="c2" data-ft-cake="1" alt=""></div></div>
+        <div class="ft-box-flap">
+          <div class="ft-flap-out"><div class="ft-box-label${size}"><small>Moonlight より</small><b><span>${cakeEsc(a)}さん・</span><span>${cakeEsc(b)}さんへ</span></b></div></div>
+          <div class="ft-flap-in"></div>
+        </div>
+      </div>
+    </div>
     <div class="ft-count" id="ftCount" aria-live="assertive"></div>
   </div>`;
 }
-
 function ftReadyHtml() {
   return `<section class="card ft-ready">
     <div class="ft-eyebrow center">6枚の写真がそろいました</div>
@@ -732,15 +739,15 @@ function ftOpenedHtml() {
   const cakes = ft.cakes || [];
   const recv = ft.received_at
     ? `<div class="ft-received">✓ ${ftDateText(ft.received_at)}に受け取りました</div>`
-    : `<div class="ft-receive"><b>ふたりでMoonlightに来て、店員に「ふたりの月」と伝えてください。</b>このケーキボックスをお渡しします。<small>${ftDeadline()}まで ・ お代はいりません</small></div>`;
+    : `<div class="ft-receive"><b>ふたりでMoonlightに来て、店員に「ふたりの月」と伝えてください。</b>このケーキ（2個セット）をお渡しします。<small>${ftDeadline()}まで ・ お代はいりません</small></div>`;
   return `<section class="card ft-gift">
       <div class="ft-eyebrow center">FOR TWO ・ ふたりへ</div>
-      <h2 class="center">${t.name}のケーキボックス</h2>
+      <h2 class="center">${t.name}のケーキ</h2>
       ${ftBoxHtml(revealed ? "opened" : "closed")}
       <div class="ft-after${hide}">
         <div class="ft-cake-names"><span>${cakeEsc(cakes[0] ? cakes[0].name : "")}</span><span>${cakeEsc(cakes[1] ? cakes[1].name : "")}</span></div>
         ${recv}
-        <button class="ft-to-album" type="button" data-ft-act="toalbum">↓ ふたりのアルバムを見る・保存する</button>
+        <button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span>・<span class="nw">保存する</span></button>
       </div>
     </section>
     <div class="ft-after${hide}">${ftAlbumHtml()}</div>`;
@@ -828,7 +835,7 @@ async function ftMakeImage() {
   const me = ft.me, pa = ft.partner;
   const cakes = ft.cakes || [];
   const notes = [...me.photos, ...(pa.photos || [])].map((p) => (p && p.note) || "").join("");
-  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ケーキボックス写真はページで`);
+  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ケーキ（2個セット）写真はページで`);
   const W = 1080, H = 2110;
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
@@ -847,13 +854,29 @@ async function ftMakeImage() {
   ctx.font = `500 32px ${IMG_FONT}`;
   ctx.fillText(`${t.name}（${t.kana}）のふたり`, W / 2, 290);
   ctx.fillStyle = "#f4e7c4";
+  // ふたりの名前：1行に入らなければ2行（ひとりめ ＆ / ふたりめ）にして、入る大きさまで小さくする
+  const pairText = `${me.name}  ＆  ${pa.name}`;
+  const lines = [`${me.name}  ＆`, pa.name];
+  let shift = 0;
   ctx.font = `600 42px ${IMG_FONT}`;
-  imgCenterText(ctx, `${me.name}  ＆  ${pa.name}`, W / 2, 352, W - 220);
-  imgRule(ctx, W / 2, 382, 260);
+  if (ctx.measureText(pairText).width <= W - 220) {
+    ctx.fillText(pairText, W / 2, 352);
+  } else {
+    let size = 36;
+    const fits = () => lines.every((l) => ctx.measureText(l).width <= W - 220);
+    for (; size > 20; size -= 2) {
+      ctx.font = `600 ${size}px ${IMG_FONT}`;
+      if (fits()) break;
+    }
+    ctx.fillText(lines[0], W / 2, 334, W - 220);
+    ctx.fillText(lines[1], W / 2, 334 + size + 6, W - 220);
+    shift = size - 12;
+  }
+  imgRule(ctx, W / 2, 382 + shift, 260);
 
   const pw = 446, ph = 251, gap = 28;
   const x1 = (W - (pw * 2 + gap)) / 2, x2 = x1 + pw + gap;
-  let y = 412;
+  let y = 412 + shift;
   for (let i = 0; i < 3; i++) {
     imgRuns(ctx, [
       { text: IMG_KANJI_NUM[i + 1], font: `600 30px ${IMG_FONT}`, color: "#e3c886" },
@@ -884,7 +907,9 @@ async function ftMakeImage() {
       ctx.restore();
       ctx.textAlign = "left";
       ctx.fillStyle = "#e3c886";
-      ctx.font = `600 23px ${IMG_FONT}`;
+      let ws = 23;
+      ctx.font = `600 ${ws}px ${IMG_FONT}`;
+      while (ctx.measureText(who).width > pw - 8 && ws > 14) { ws -= 1; ctx.font = `600 ${ws}px ${IMG_FONT}`; }
       ctx.fillText(who, x + 4, y + ph + 34, pw - 8);
       if (p && p.note) {
         ctx.fillStyle = "#cfd6e6";
@@ -898,7 +923,7 @@ async function ftMakeImage() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#cdb170";
   ctx.font = `500 26px ${IMG_FONT}`;
-  ctx.fillText(`ふたりへのケーキボックス ・ ${t.name}`, W / 2, y + 22);
+  ctx.fillText(`ふたりへのケーキ ・ ${t.name}`, W / 2, y + 22);
   const cy = y + 44, size = 210;
   for (let k = 0; k < 2; k++) {
     const c = cakes[k];
