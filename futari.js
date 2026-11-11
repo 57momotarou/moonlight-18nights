@@ -1,6 +1,6 @@
 // futari.js — 「ふたりの月」：受付で参加を登録したふたり（カップル・夫婦）のアルバムにだけ出るタブ。
 // 流れ：心理テスト（ひとりずつ・相手には見えない）→ ふたりの月のタイプとお題3つ → お題の写真のURLを貼る（相手の写真は開けるまで見えない）
-//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 箱からケーキ・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
+//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 写真が集まってケーキが表紙のアルバム・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
 // 進み具合・相手の写真・ケーキの名前と画像の鍵は Supabase から届く（cake_futari ほか）。ケーキの画像は assets/*.bin（暗号化済み）。
 "use strict";
 
@@ -273,15 +273,14 @@ function renderFutari(force = false) {
   else if (st === "ready") body = ftReadyHtml() + ftTypeCardHtml(true) + ftPhotosHtml(true);
   else body = ftOpenedHtml();
   root.innerHTML = ftHeadHtml(st) + body;
-  ftHydrate(root);
-  ftFitLabel();
+  ftHydrate(root).then(ftFitPlate);
   if (st === "ready") ftSyncWaitUi();
   if ((st === "opened" || st === "received") && !ftFlag("revealed")) ftPlayReveal();
 }
 
 function ftHeadHtml(st) {
   const order = { quiz: 1, photos: 2, ready: 3, opened: 4, received: 5 }[st];
-  const steps = ["心理テスト", "写真", "箱を開ける", "受け取り"];
+  const steps = ["心理テスト", "写真", "ふたりで開ける", "受け取り"];
   const [a, b] = ftPairNames();
   return `<section class="card ft-id">
     <div class="ft-id-top"><span class="ft-eyebrow">FUTARI NO TSUKI ・ ふたりの月</span><span class="ft-no">No.${String(ft.no).padStart(3, "0")}</span></div>
@@ -387,7 +386,7 @@ function ftPhotosHtml(collapsed) {
   const head = `<section class="card ft-howto">
     <h2>お題に合わせて、写真を撮ろう</h2>
     <p class="small" style="margin:0 0 8px">ゲームの中で写真を撮って、写真のURLを貼ってください。ふたりで同じ場所で撮っても、別々に思い思いの写真を撮っても大丈夫です。</p>
-    <p class="small ft-lock">🔒 相手の写真は、ふたりで箱を開けるまで見えません。</p>
+    <p class="small ft-lock">🔒 相手の写真は、ふたりで開けるまで見えません。</p>
     <div class="ft-progress"><span>あなた <b>${ftMine()}</b> / 3</span><span>${pn}さん <b>${ftTheirs()}</b> / 3</span></div>
     <details class="ft-help"><summary>写真のURLって？</summary>
       <p class="small">ゲームの中で写真を撮ると、写真のURL（<code>https://r2.fivemanage.com/…</code> のような文字）がコピーできます。それを下の欄にそのまま貼り付けて「貼る」を押してください。</p></details>
@@ -597,45 +596,69 @@ function ftZoom(ref) {
   ftHydrate($("modalCard"));
 }
 
-// ---------- 箱 ----------
+// ---------- 開ける演出（裏返しの写真6枚 → ケーキが表紙のアルバム） ----------
+// 表紙に入れる「ふたりで開けた日」（2026.11.11）
+function ftCoverDate() {
+  const d = ft && ft.open_at ? new Date(ft.open_at) : null;
+  if (!d || Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function ftBoxHtml(state) {
   const [a, b] = ftPairNames();
+  const t = ftType();
   const len = [...`${a}${b}`].length;
-  const size = len > 24 ? " xlong" : len > 13 ? " long" : "";
+  const size = len > 22 ? " xlong" : len > 12 ? " long" : "";
+  // 左の3枚＝登録が先の人、右の3枚＝あとの人（ふたりとも同じ並び）。開けるまでは全部裏返し
+  const sides = ft.me.side === "b" ? ["partner", "me"] : ["me", "partner"];
+  const pics = sides.flatMap((side) => [0, 1, 2].map((i) => [side, i])).map(([side, i], k) =>
+    `<div class="ft-pic p${k}"><div class="ft-pic-in"><span class="ft-pic-b"></span><span class="ft-pic-f"><img data-ft-photo="${side}:${i}" alt=""></span></div></div>`).join("");
+  const date = ftCoverDate();
   return `<div class="ft-box ${state}" id="ftBox">
     <div class="ft-box-glow"></div>
-    <div class="ft-moon"></div>
-    <div class="ft-floor"></div>
-    <div class="ft-cake c1"><img data-ft-cake="0" alt=""><i></i></div>
-    <div class="ft-cake c2"><img data-ft-cake="1" alt=""><i></i></div>
+    ${pics}
+    <div class="ft-flash"></div>
+    <button type="button" class="ft-cover" data-ft-act="toalbum" aria-label="ふたりのアルバムを見る">
+      <span class="ft-cover-title">ふたりの月</span>
+      <span class="ft-cover-shop">cafe &amp; bar Moonlight</span>
+      <span class="ft-cover-cake"><img data-ft-cake="0" alt=""><span class="ft-plate" id="ftPlate"><b>${cakeEsc(a)}さん・</b><b>${cakeEsc(b)}さんへ</b></span></span>
+      <span class="ft-cover-names${size}">${cakeEsc(a)} ＆ ${cakeEsc(b)}</span>
+      <span class="ft-cover-sub">${t ? t.name : ""}${date ? ` ・ ${date}` : ""}</span>
+    </button>
     <div class="ft-sparks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="ft-card"><div class="ft-card-moon"></div><div class="ft-box-label${size}"><small>Moonlight より</small><b><span>${cakeEsc(a)}さん・</span><span>${cakeEsc(b)}さんへ</span></b></div></div>
-    <div class="ft-from${size}"><small>Moonlight より</small><b>${cakeEsc(a)}さん・${cakeEsc(b)}さんへ</b></div>
     <div class="ft-count" id="ftCount" aria-live="assertive"></div>
   </div>`;
 }
 
-// 箱の前の面のラベル：名前が長いときは、入るまで字を小さくする
-function ftFitLabel() {
-  const label = document.querySelector("#ftBox .ft-box-label");
-  const names = label && label.querySelector("b");
-  if (!names || !label.clientHeight) return;
-  let size = parseFloat(getComputedStyle(names).fontSize);
-  while (label.scrollHeight > label.clientHeight + 1 && size > 7) {
+// ケーキのプレートに、ふたりの名前を重ねる（場所はケーキごとに決まっている。長い名前は入るまで小さくする）
+function ftFitPlate() {
+  const el = document.querySelector("#ftBox .ft-plate");
+  const c = ft && ft.cakes ? ft.cakes[0] : null;
+  const pl = c && c.asset ? c.asset.plate : null;
+  const wrap = el && el.parentElement;
+  if (!el || !pl || !wrap || !wrap.clientWidth) return;
+  el.style.left = `${pl.cx * 100}%`;
+  el.style.top = `${pl.cy * 100}%`;
+  el.style.width = `${pl.w * 100}%`;
+  el.style.height = `${pl.h * 100}%`;
+  let size = el.clientHeight * 0.4;
+  const fits = () => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1;
+  el.style.fontSize = `${size}px`;
+  while (!fits() && size > 4) {
     size -= 0.5;
-    names.style.fontSize = `${size}px`;
-    names.style.lineHeight = "1.3";
+    el.style.fontSize = `${size}px`;
   }
+  el.classList.add("fit");
 }
 function ftReadyHtml() {
   return `<section class="card ft-ready">
     <div class="ft-eyebrow center">6枚の写真がそろいました</div>
-    <h2 class="center">ふたりの箱が届いています</h2>
+    <h2 class="center">ふたりのアルバムができあがります</h2>
     ${ftBoxHtml("closed")}
     <p class="ft-wait-msg center" id="ftWaitMsg"></p>
     <button class="btn block glow" type="button" id="ftOpenBtn" data-ft-act="open">ふたりで開ける</button>
     <button class="btn ghost block hidden" type="button" id="ftStopBtn" data-ft-act="stop" style="margin-top:8px">やめる</button>
-    <p class="small muted center" style="margin:10px 0 0">ふたりがそれぞれ自分のアルバムで「ふたりで開ける」を押すと、同じ時間に箱が開きます。写真とケーキは、そのときまでのお楽しみです。</p>
+    <p class="small muted center" style="margin:10px 0 0">ふたりがそれぞれ自分のアルバムで「ふたりで開ける」を押すと、同じ時間に写真が表になります。写真とケーキは、そのときまでのお楽しみです。</p>
   </section>`;
 }
 
@@ -739,7 +762,7 @@ async function ftFinishOpen() {
     if (!ft || ft.opened) return;   // 開いた状態が届くと、描き直しで演出が始まる
     await ftSleep(700);
   }
-  toast("箱を開けられませんでした。「更新」を押してください");
+  toast("開けられませんでした。「更新」を押してください");
 }
 
 // ---------- 開けたあと ----------
@@ -750,13 +773,13 @@ function ftOpenedHtml() {
   const cakes = ft.cakes || [];
   const recv = ft.received_at
     ? `<div class="ft-received">✓ ${ftDateText(ft.received_at)}に受け取りました</div>`
-    : `<div class="ft-receive"><b>ふたりでMoonlightに来て、店員に「ふたりの月」と伝えてください。</b>このケーキ（2個セット）をお渡しします。<small>${ftDeadline()}まで ・ お代はいりません</small></div>`;
+    : `<div class="ft-receive"><b>ふたりでMoonlightに来て、店員に「ふたりの月」と伝えてください。</b>このホールケーキをお渡しします。<small>${ftDeadline()}まで ・ お代はいりません</small></div>`;
   return `<section class="card ft-gift">
       <div class="ft-eyebrow center">FOR TWO ・ ふたりへ</div>
       <h2 class="center">${t.name}のケーキ</h2>
       ${ftBoxHtml(revealed ? "opened" : "closed")}
       <div class="ft-after${hide}">
-        <div class="ft-cake-names"><span>${cakeEsc(cakes[0] ? cakes[0].name : "")}</span><span>${cakeEsc(cakes[1] ? cakes[1].name : "")}</span></div>
+        <div class="ft-cake-names">${cakeEsc(cakes[0] ? cakes[0].name : "")}</div>
         ${recv}
         <button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span><span class="nw">・保存する</span></button>
       </div>
@@ -802,12 +825,13 @@ async function ftPlayReveal() {
   if (!box || ftRevealing) return;
   ftRevealing = true;
   try {
-    await Promise.race([ftHydrateCakes(box), ftSleep(6000)]);   // ケーキの画像を先に開いておく
+    await Promise.race([ftHydrate(box), ftSleep(6000)]);   // ケーキの画像を先に開いておく
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     await ftSleep(500);
     box.classList.remove("closed", "counting");
+    ftFitPlate();
     box.classList.add("opening");
-    await ftSleep(2400);
+    await ftSleep(3900);
     box.classList.remove("opening");
     box.classList.add("opened");
     ftFlag("revealed", "1");
@@ -846,7 +870,7 @@ async function ftMakeImage() {
   const me = ft.me, pa = ft.partner;
   const cakes = ft.cakes || [];
   const notes = [...me.photos, ...(pa.photos || [])].map((p) => (p && p.note) || "").join("");
-  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ケーキ（2個セット）写真はページで`);
+  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ホールケーキさんへ・0123456789.写真はページで`);
   const W = 1080, H = 2110;
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
@@ -863,7 +887,8 @@ async function ftMakeImage() {
   imgSpaced(ctx, "ふたりの月", W / 2, 232, 12);
   ctx.fillStyle = "#e8d096";
   ctx.font = `500 32px ${IMG_FONT}`;
-  ctx.fillText(`${t.name}（${t.kana}）のふたり`, W / 2, 290);
+  const day = ftCoverDate();
+  ctx.fillText(`${t.name}（${t.kana}）のふたり${day ? ` ・ ${day}` : ""}`, W / 2, 290);
   ctx.fillStyle = "#f4e7c4";
   // ふたりの名前：1行に入らなければ2行（ひとりめ ＆ / ふたりめ）にして、入る大きさまで小さくする
   const pairText = `${me.name}  ＆  ${pa.name}`;
@@ -934,25 +959,38 @@ async function ftMakeImage() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#cdb170";
   ctx.font = `500 26px ${IMG_FONT}`;
-  ctx.fillText(`ふたりへのケーキ ・ ${t.name}`, W / 2, y + 22);
-  const cy = y + 44, size = 210;
-  for (let k = 0; k < 2; k++) {
-    const c = cakes[k];
-    const cx = W / 2 + (k === 0 ? -1 : 1) * 190;
-    const glow = ctx.createRadialGradient(cx, cy + size / 2, 10, cx, cy + size / 2, size * 0.7);
-    glow.addColorStop(0, "rgba(255,236,190,.22)");
-    glow.addColorStop(1, "rgba(255,236,190,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(cx - size, cy - 20, size * 2, size + 40);
-    const im = c ? await imgLoad(await ftAssetUrl(c.asset).catch(() => "")) : null;
-    if (im) {
-      const s = Math.min(size / im.naturalWidth, size / im.naturalHeight);
-      ctx.drawImage(im, cx - (im.naturalWidth * s) / 2, cy + (size - im.naturalHeight * s) / 2, im.naturalWidth * s, im.naturalHeight * s);
+  ctx.fillText(`ふたりへのホールケーキ ・ ${t.name}`, W / 2, y + 22);
+  // ケーキは1つ。プレートにふたりの名前を入れる
+  const c = cakes[0];
+  const size = 250, cx = W / 2, cy = y + 30;
+  const glow = ctx.createRadialGradient(cx, cy + size / 2, 10, cx, cy + size / 2, size * 0.75);
+  glow.addColorStop(0, "rgba(255,236,190,.22)");
+  glow.addColorStop(1, "rgba(255,236,190,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(cx - size, cy - 20, size * 2, size + 40);
+  const im = c ? await imgLoad(await ftAssetUrl(c.asset).catch(() => "")) : null;
+  if (im) {
+    const k = Math.min(size / im.naturalWidth, size / im.naturalHeight);
+    const dw = im.naturalWidth * k, dh = im.naturalHeight * k;
+    const dx = cx - dw / 2, dy = cy + (size - dh) / 2;
+    ctx.drawImage(im, dx, dy, dw, dh);
+    const pl = c.asset.plate;
+    if (pl) {
+      const [n1, n2] = ftPairNames();
+      const rows = [`${n1}さん・`, `${n2}さんへ`];
+      const bw = pl.w * dw, bh = pl.h * dh;
+      let fs = bh * 0.4;
+      ctx.font = `600 ${fs}px ${IMG_FONT}`;
+      while (rows.some((r) => ctx.measureText(r).width > bw) && fs > 4) { fs -= 0.5; ctx.font = `600 ${fs}px ${IMG_FONT}`; }
+      ctx.fillStyle = "#52281a";
+      ctx.textBaseline = "middle";
+      rows.forEach((r, i) => ctx.fillText(r, dx + pl.cx * dw, dy + pl.cy * dh + (i - 0.5) * fs * 1.22));
+      ctx.textBaseline = "alphabetic";
     }
-    ctx.fillStyle = "#f4ecd2";
-    ctx.font = `500 23px ${IMG_FONT}`;
-    if (c) imgCenterText(ctx, c.name, cx, cy + size + 30, 360);
   }
+  ctx.fillStyle = "#f4ecd2";
+  ctx.font = `500 23px ${IMG_FONT}`;
+  if (c) imgCenterText(ctx, c.name, cx, cy + size + 26, 700);
   await imgFooter(ctx, W, H);
   return cv;
 }
