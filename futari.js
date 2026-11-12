@@ -176,7 +176,7 @@ function ftLoadSoon() {
 function ftPollTick() {
   if (!ft || !code || activeTab !== "futari" || document.hidden || ftWaiting || ftRevealing || ftCountTimer || saveState) return;
   const st = ftStage();
-  const every = st === "ready" ? 4000 : st === "opened" ? 20000 : st === "received" ? 60000 : 12000;
+  const every = st === "ready" ? 4000 : st === "opened" ? 10000 : st === "received" ? 60000 : 12000;   // 開けたあとは、店で受け取りが押されるのを10秒ごとに見る
   if (Date.now() - ftLastLoad >= every) futariLoad();
 }
 
@@ -597,7 +597,7 @@ function ftZoom(ref) {
   ftHydrate($("modalCard"));
 }
 
-// ---------- 開ける演出（裏返しの写真6枚 → ケーキが表紙のアルバム） ----------
+// ---------- 開ける演出（裏返しの写真6枚が重なってまとまる → ケーキが表紙のアルバム） ----------
 // 表紙に入れる「ふたりで開けた日」（2026.11.11）
 function ftCoverDate() {
   const d = ft && ft.open_at ? new Date(ft.open_at) : null;
@@ -606,6 +606,7 @@ function ftCoverDate() {
 }
 
 function ftBoxHtml(state) {
+  const got = Boolean(ft.received_at);   // 店でケーキを受け取ったら、表紙からアルバムへ進める
   const [a, b] = ftPairNames();
   const t = ftType();
   const len = [...`${a}${b}`].length;
@@ -620,13 +621,13 @@ function ftBoxHtml(state) {
     ${pics}
     <div class="ft-ring"></div>
     <div class="ft-flash"></div>
-    <button type="button" class="ft-cover" data-ft-act="toalbum" aria-label="ふたりのアルバムを見る">
+    <${got ? 'button type="button"' : "div"} class="ft-cover${got ? "" : " locked"}"${got ? ' data-ft-act="toalbum" aria-label="ふたりのアルバムを見る"' : ""}>
       <span class="ft-cover-title">ふたりの月</span>
       <span class="ft-cover-shop">cafe &amp; bar Moonlight</span>
       <span class="ft-cover-cake"><img data-ft-cake="0" alt=""></span>
       <span class="ft-cover-names${size}">${cakeEsc(a)} ＆ ${cakeEsc(b)}</span>
       <span class="ft-cover-sub">${t ? t.name : ""}${date ? ` ・ ${date}` : ""}</span>
-    </button>
+    </${got ? "button" : "div"}>
     <div class="ft-sparks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="ft-count" id="ftCount" aria-live="assertive"></div>
   </div>`;
@@ -762,10 +763,10 @@ function ftOpenedHtml() {
       <div class="ft-after${hide}">
         <div class="ft-cake-names">${cakeEsc(cakes[0] ? cakes[0].name : "")}</div>
         ${recv}
-        <button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span><span class="nw">・保存する</span></button>
+        ${ft.received_at ? `<button class="ft-to-album" type="button" data-ft-act="toalbum"><span class="nw">↓ ふたりのアルバムを見る</span><span class="nw">・保存する</span></button>` : ""}
       </div>
     </section>
-    <div class="ft-after${hide}">${ftAlbumHtml()}</div>`;
+    ${ft.received_at ? `<div class="ft-after${hide}">${ftAlbumHtml()}</div>` : ""}`;
 }
 
 function ftAlbumHtml() {
@@ -812,7 +813,7 @@ async function ftPlayReveal() {
     await ftSleep(500);
     box.classList.remove("closed", "counting");
     box.classList.add("opening");
-    await ftSleep(5600);   // 表になる → 1枚ずつ重なる → ピタッとまとまる → 光る → 表紙
+    await ftSleep(4950);   // 裏返しのまま1枚ずつ重なる → ピタッとまとまる → 光る → 表紙
     box.classList.remove("opening");
     box.classList.add("opened");
     ftFlag("revealed", "1");

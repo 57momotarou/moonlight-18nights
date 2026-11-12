@@ -45,7 +45,8 @@ button{cursor:pointer}
 .bg-stars{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .bg-stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:twinkle 4s ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.75}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* 「動きを減らす」設定の端末では動きを止める。ただし、ふたりの月の「ふたりで開ける」演出（.ft-box の中）だけは見せる */
+@media (prefers-reduced-motion:reduce){*:not(.ft-box):not(.ft-box *){animation:none!important;transition:none!important}}
 
 /* ヘッダー */
 .brand{display:flex;align-items:center;gap:12px;margin:6px 0 18px}
