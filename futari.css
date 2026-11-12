@@ -13,7 +13,6 @@
 /* ふたりの証（いちばん上） */
 .ft-id{background:linear-gradient(160deg,rgba(40,34,70,.92),rgba(17,26,46,.9));border-color:rgba(232,190,200,.28)}
 .ft-id-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.ft-no{font-family:"Cormorant Garamond",var(--mincho);font-size:15px;color:var(--gold2)}
 .ft-id-names{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:4px 10px;font-family:var(--mincho);font-size:22px;color:var(--moon);text-align:center;margin:4px 0 2px;word-break:break-all}
 .ft-amp{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:26px;color:#f0c3cf}
 .ft-id-type{display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--mincho);font-size:13px;color:var(--gold2);margin:2px 0 4px}
@@ -122,9 +121,6 @@
   background:radial-gradient(closest-side,rgba(255,236,190,.2),rgba(255,236,190,0))}
 .ft-cover-cake img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 12px rgba(0,0,0,.4))}
 .ft-cover-cake img:not([src]){visibility:hidden}
-.ft-plate{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:translate(-50%,-50%);overflow:hidden;color:#52281a;font-family:var(--mincho);font-weight:600;line-height:1.22;white-space:nowrap;visibility:hidden}
-.ft-plate b{display:block;font-weight:600}
-.ft-plate.fit{visibility:visible}
 .ft-cover-names{position:relative;margin-top:calc(var(--bw)*.01);max-width:100%;font-size:calc(var(--bw)*.062);font-weight:600;line-height:1.35;overflow-wrap:anywhere}
 .ft-cover-names.long{font-size:calc(var(--bw)*.05)}
 .ft-cover-names.xlong{font-size:calc(var(--bw)*.041)}
@@ -166,7 +162,7 @@
 /* 開けたあと */
 .ft-gift{overflow:hidden;background:radial-gradient(120% 80% at 50% 10%,rgba(70,62,110,.6),rgba(17,26,46,.92) 70%)}
 .ft-cake-names{text-align:center;font-family:var(--mincho);font-size:15px;line-height:1.5;color:var(--gold2);margin:4px 0 12px}
-.ft-receive{padding:12px 14px;border-radius:14px;background:rgba(214,179,101,.1);border:1px solid var(--line);font-size:14px;line-height:1.75}
+.ft-receive{padding:12px 14px;border-radius:14px;background:rgba(214,179,101,.1);border:1px solid var(--line);font-family:var(--mincho);font-size:15px;line-height:1.75;color:var(--gold2);text-align:center;text-wrap:pretty}
 .ft-receive b{display:block;font-family:var(--mincho);color:var(--gold2);font-weight:600}
 .ft-receive small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
 .ft-received{text-align:center;padding:12px;border-radius:14px;background:rgba(127,220,178,.1);border:1px solid rgba(127,220,178,.4);color:var(--ok);font-family:var(--mincho);font-size:15px}
@@ -205,3 +201,9 @@
 .list .li.fs-wait{border:1px solid var(--gold);background:rgba(214,179,101,.1)}
 .list .li.fs-done-row{opacity:.75}
 .fs-box{display:inline-block;margin-top:4px;padding:3px 10px;border-radius:10px;background:#2a2410;color:var(--gold2);font-size:13px;font-weight:700}
+.fs-cakes{margin:0 0 10px;padding:9px 12px;border-radius:12px;background:rgba(214,179,101,.08);border:1px solid var(--line);line-height:1.7}
+.fs-cakes b{display:block;font-family:var(--mincho);color:var(--gold2);font-weight:600;margin-bottom:2px}
+.fs-cakes span{display:inline-block;min-width:3.6em;color:var(--gold2);font-family:var(--mincho)}
+.ft-book-btn{margin-top:8px}
+.ft-pages-overlay img{display:block;width:min(78vw,340px);height:auto;margin:0 auto 6px;border-radius:6px}
+.ft-page-no{margin:12px 0 4px;text-align:center;color:var(--gold2);font-family:var(--mincho)}

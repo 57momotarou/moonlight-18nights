@@ -1,4 +1,4 @@
-// futari.js — 「ふたりの月」：受付で参加を登録したふたり（カップル・夫婦）のアルバムにだけ出るタブ。
+// futari.js — 「ふたりの月」：受付で参加を登録したふたり（恋人・夫婦・友だち・家族など、大切な人とふたり）のアルバムにだけ出るタブ。
 // 流れ：心理テスト（ひとりずつ・相手には見えない）→ ふたりの月のタイプとお題3つ → お題の写真のURLを貼る（相手の写真は開けるまで見えない）
 //       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 写真が集まってケーキが表紙のアルバム・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
 // 進み具合・相手の写真・ケーキの名前と画像の鍵は Supabase から届く（cake_futari ほか）。ケーキの画像は assets/*.bin（暗号化済み）。
@@ -38,7 +38,7 @@ const FT_QUESTIONS = [
   { q: "夜、ふたりで出かけるなら？", a: ["いつものお店でのんびり", "行き先を決めずにドライブ", "朝日が見られる海", "人のいない静かな湖", "まだ行ったことのない夜景"] },
   { q: "相手に言われてうれしいのは？", a: ["「おかえり」", "「ちょっと寄り道しよう」", "「もう少し話してたい」", "言葉はなくても、隣にいてくれたら", "「次はどこに行く？」"] },
   { q: "好きな月は？", a: ["夕方の空に見える、いつもの月", "少し遅れて昇ってくる月", "明け方の空に残る白い月", "雲ににじんだ、やわらかな月", "明日の満月を待つ、前の夜の月"] },
-  { q: "ふたりの思い出を1枚だけ残すなら？", a: ["ふたりの部屋", "車の窓から見た景色", "朝焼けの空", "暗い中に灯った明かり", "はじめて会った場所"] },
+  { q: "ふたりの思い出を1枚だけ残すなら？", a: ["いつもの溜まり場", "車の窓から見た景色", "朝焼けの空", "暗い中に灯った明かり", "はじめて会った場所"] },
   { q: "今、食べたい甘さは？", a: ["やさしい甘さ", "甘酸っぱいフルーツ", "さっぱり爽やか", "ふんわり香る", "きらきら華やか"] }
 ];
 const FT_BEAT_MS = 2500;    // 「ふたりで開ける」を押して待っている間の合図の間隔
@@ -138,6 +138,7 @@ function ftApply(r, t0 = Date.now()) {
   if (!ft) ftStopWait(false);
   futariOnAlbum();
   ftEnsureCopies();
+  setTimeout(ftBookEnsure, 1500);
 }
 
 // 写真の控え：ページで作れなかった写真は、Supabase から写真の置き場所へ取りに行ってもらう（1枚につき、このページで1回）。
@@ -273,17 +274,17 @@ function renderFutari(force = false) {
   else if (st === "ready") body = ftReadyHtml() + ftTypeCardHtml(true) + ftPhotosHtml(true);
   else body = ftOpenedHtml();
   root.innerHTML = ftHeadHtml(st) + body;
-  ftHydrate(root).then(ftFitPlate);
+  ftHydrate(root);
   if (st === "ready") ftSyncWaitUi();
   if ((st === "opened" || st === "received") && !ftFlag("revealed")) ftPlayReveal();
 }
 
 function ftHeadHtml(st) {
   const order = { quiz: 1, photos: 2, ready: 3, opened: 4, received: 5 }[st];
-  const steps = ["心理テスト", "写真", "ふたりで開ける", "受け取り"];
+  const steps = ["心理テスト", "写真", "開ける", "受け取り"];
   const [a, b] = ftPairNames();
   return `<section class="card ft-id">
-    <div class="ft-id-top"><span class="ft-eyebrow">FUTARI NO TSUKI ・ ふたりの月</span><span class="ft-no">No.${String(ft.no).padStart(3, "0")}</span></div>
+    <div class="ft-id-top"><span class="ft-eyebrow">ふたりの月</span></div>
     <div class="ft-id-names${[...`${a}${b}`].length > 20 ? " long" : ""}"><span>${cakeEsc(a)}</span><i class="ft-amp">&amp;</i><span>${cakeEsc(b)}</span></div>
     ${ft.type ? `<div class="ft-id-type">${ftMoonHtml(ft.type, 22)}${FT_TYPES[ft.type].name}のふたり</div>` : ""}
     <ol class="dlv-steps ft-steps">${steps.map((s, i) => {
@@ -621,7 +622,7 @@ function ftBoxHtml(state) {
     <button type="button" class="ft-cover" data-ft-act="toalbum" aria-label="ふたりのアルバムを見る">
       <span class="ft-cover-title">ふたりの月</span>
       <span class="ft-cover-shop">cafe &amp; bar Moonlight</span>
-      <span class="ft-cover-cake"><img data-ft-cake="0" alt=""><span class="ft-plate" id="ftPlate"><b>${cakeEsc(a)}さん・</b><b>${cakeEsc(b)}さんへ</b></span></span>
+      <span class="ft-cover-cake"><img data-ft-cake="0" alt=""></span>
       <span class="ft-cover-names${size}">${cakeEsc(a)} ＆ ${cakeEsc(b)}</span>
       <span class="ft-cover-sub">${t ? t.name : ""}${date ? ` ・ ${date}` : ""}</span>
     </button>
@@ -630,26 +631,6 @@ function ftBoxHtml(state) {
   </div>`;
 }
 
-// ケーキのプレートに、ふたりの名前を重ねる（場所はケーキごとに決まっている。長い名前は入るまで小さくする）
-function ftFitPlate() {
-  const el = document.querySelector("#ftBox .ft-plate");
-  const c = ft && ft.cakes ? ft.cakes[0] : null;
-  const pl = c && c.asset ? c.asset.plate : null;
-  const wrap = el && el.parentElement;
-  if (!el || !pl || !wrap || !wrap.clientWidth) return;
-  el.style.left = `${pl.cx * 100}%`;
-  el.style.top = `${pl.cy * 100}%`;
-  el.style.width = `${pl.w * 100}%`;
-  el.style.height = `${pl.h * 100}%`;
-  let size = el.clientHeight * 0.4;
-  const fits = () => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1;
-  el.style.fontSize = `${size}px`;
-  while (!fits() && size > 4) {
-    size -= 0.5;
-    el.style.fontSize = `${size}px`;
-  }
-  el.classList.add("fit");
-}
 function ftReadyHtml() {
   return `<section class="card ft-ready">
     <div class="ft-eyebrow center">6枚の写真がそろいました</div>
@@ -773,9 +754,8 @@ function ftOpenedHtml() {
   const cakes = ft.cakes || [];
   const recv = ft.received_at
     ? `<div class="ft-received">✓ ${ftDateText(ft.received_at)}に受け取りました</div>`
-    : `<div class="ft-receive"><b>ふたりでMoonlightに来て、店員に「ふたりの月」と伝えてください。</b>このホールケーキをお渡しします。<small>${ftDeadline()}まで ・ お代はいりません</small></div>`;
+    : `<div class="ft-receive">ふたりでMoonlightに来て、店員に「ふたりの月のケーキを受け取りに来た」と伝えてください。</div>`;
   return `<section class="card ft-gift">
-      <div class="ft-eyebrow center">FOR TWO ・ ふたりへ</div>
       <h2 class="center">${t.name}のケーキ</h2>
       ${ftBoxHtml(revealed ? "opened" : "closed")}
       <div class="ft-after${hide}">
@@ -807,8 +787,9 @@ function ftKeepHtml() {
   const saved = Boolean(ftFlag("saved"));
   return `<div class="ft-keep${saved ? " saved" : ""}" id="ftKeep">
       <b class="ft-keep-title">${saved ? "✓ 画像で保存しました" : "📷 アルバムを画像で保存しましょう"}</b>
-      <p>ゲームの写真は、街が終わると見られなくなることがあります。ふたりの写真とケーキを<span class="nw">1枚の画像</span>にまとめて、スマホやパソコンに残せます。</p>
-      <button class="btn block${saved ? "" : " glow"}" type="button" data-ft-act="save" id="ftSaveBtn">${saved ? "もう一度保存する" : "アルバムを画像で保存"}</button>
+      <p>ゲームの写真は、街が終わると見られなくなることがあります。ふたりの写真とケーキを<span class="nw">1枚の画像</span>にまとめるか、街の本と同じ<span class="nw">5ページ</span>に分けて、スマホやパソコンに残せます。</p>
+      <button class="btn block${saved ? "" : " glow"}" type="button" data-ft-act="save" id="ftSaveBtn">${saved ? "1枚にまとめて、もう一度保存" : "1枚にまとめて保存"}</button>
+      <button class="btn ghost block ft-book-btn" type="button" data-ft-act="book">本のページ（5枚）で保存</button>
       <p class="small muted">写真をタップすると大きく見られます。長押し（パソコンは右クリック）で、写真を<span class="nw">1枚ずつ</span>保存することもできます。</p>
     </div>`;
 }
@@ -829,7 +810,6 @@ async function ftPlayReveal() {
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     await ftSleep(500);
     box.classList.remove("closed", "counting");
-    ftFitPlate();
     box.classList.add("opening");
     await ftSleep(3900);
     box.classList.remove("opening");
@@ -842,6 +822,7 @@ async function ftPlayReveal() {
     });
   } finally {
     ftRevealing = false;
+    setTimeout(ftBookEnsure, 2500);   // 開ける演出のあとで、街の本のページを作って置く
   }
 }
 
@@ -865,12 +846,24 @@ function ftDrawCover(ctx, im, x, y, w, h) {
   ctx.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
 }
 
+// 保存する画像の左上に、お店のロゴと名前
+async function ftImgLogo(ctx) {
+  const logo = await imgLoad("icons/icon-192.png");
+  const x = 78, y = 74;
+  if (logo) ctx.drawImage(logo, x, y, 46, 46);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(226,201,140,.92)";
+  ctx.font = `italic 500 26px ${IMG_EN}`;
+  ctx.fillText("cafe & bar Moonlight", x + (logo ? 58 : 0), y + 32);
+  ctx.textAlign = "center";
+}
+
 async function ftMakeImage() {
   const t = ftType();
   const me = ft.me, pa = ft.partner;
   const cakes = ft.cakes || [];
   const notes = [...me.photos, ...(pa.photos || [])].map((p) => (p && p.note) || "").join("");
-  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ホールケーキさんへ・0123456789.写真はページで`);
+  await imgFonts(`ふたりの月アルバム${t.name}${t.kana}のふたり（）${me.name}${pa.name}＆${t.prompts.map((p) => p[0]).join("")}${notes}${cakes.map((c) => c.name).join("")}ホールケーキ0123456789.写真はページで`);
   const W = 1080, H = 2110;
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
@@ -879,9 +872,7 @@ async function ftMakeImage() {
   imgFrame(ctx, W, H, "moon");
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#cdb170";
-  ctx.font = `500 24px ${IMG_EN}`;
-  imgSpaced(ctx, "FUTARI NO TSUKI", W / 2, 140, 7);
+  await ftImgLogo(ctx);
   ctx.fillStyle = imgGold(ctx, 300, 0, 780, 0);
   ctx.font = `600 76px ${IMG_FONT}`;
   imgSpaced(ctx, "ふたりの月", W / 2, 232, 12);
@@ -960,38 +951,19 @@ async function ftMakeImage() {
   ctx.fillStyle = "#cdb170";
   ctx.font = `500 26px ${IMG_FONT}`;
   ctx.fillText(`ふたりへのホールケーキ ・ ${t.name}`, W / 2, y + 22);
-  // ケーキは1つ。プレートにふたりの名前を入れる
+  // ケーキは1つ（プレートは写真のまま）
   const c = cakes[0];
-  const size = 250, cx = W / 2, cy = y + 30;
-  const glow = ctx.createRadialGradient(cx, cy + size / 2, 10, cx, cy + size / 2, size * 0.75);
-  glow.addColorStop(0, "rgba(255,236,190,.22)");
-  glow.addColorStop(1, "rgba(255,236,190,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(cx - size, cy - 20, size * 2, size + 40);
+  const size = 320, cx = W / 2, cy = y + 24;
   const im = c ? await imgLoad(await ftAssetUrl(c.asset).catch(() => "")) : null;
   if (im) {
     const k = Math.min(size / im.naturalWidth, size / im.naturalHeight);
     const dw = im.naturalWidth * k, dh = im.naturalHeight * k;
     const dx = cx - dw / 2, dy = cy + (size - dh) / 2;
     ctx.drawImage(im, dx, dy, dw, dh);
-    const pl = c.asset.plate;
-    if (pl) {
-      const [n1, n2] = ftPairNames();
-      const rows = [`${n1}さん・`, `${n2}さんへ`];
-      const bw = pl.w * dw, bh = pl.h * dh;
-      let fs = bh * 0.4;
-      ctx.font = `600 ${fs}px ${IMG_FONT}`;
-      while (rows.some((r) => ctx.measureText(r).width > bw) && fs > 4) { fs -= 0.5; ctx.font = `600 ${fs}px ${IMG_FONT}`; }
-      ctx.fillStyle = "#52281a";
-      ctx.textBaseline = "middle";
-      rows.forEach((r, i) => ctx.fillText(r, dx + pl.cx * dw, dy + pl.cy * dh + (i - 0.5) * fs * 1.22));
-      ctx.textBaseline = "alphabetic";
-    }
   }
   ctx.fillStyle = "#f4ecd2";
   ctx.font = `500 23px ${IMG_FONT}`;
   if (c) imgCenterText(ctx, c.name, cx, cy + size + 26, 700);
-  await imgFooter(ctx, W, H);
   return cv;
 }
 
@@ -1008,6 +980,213 @@ async function ftSave(btn) {
     toast(e.message || "保存できませんでした");
   } finally {
     if (btn.isConnected) btn.disabled = false;
+  }
+}
+
+// ---------- 街の本（ブックメーカー用の5ページ。1080×1920） ----------
+// 1＝表紙 2〜4＝お題ごとの写真 5＝おわり。上（先）に登録が先の人の写真。
+// 開けたあと、ページを開いた人の端末で1回作って Supabase に置く（Windows がそこから fivemanage に上げて URL を出す）。
+const FT_BOOK_W = 1080, FT_BOOK_H = 1920;
+let ftBookBusy = false;
+let ftBookTriedAt = 0;   // 作れなかったときは1分あけてもう一度
+
+function ftBookCanvas() {
+  const cv = document.createElement("canvas");
+  cv.width = FT_BOOK_W; cv.height = FT_BOOK_H;
+  const ctx = cv.getContext("2d");
+  imgBackground(ctx, FT_BOOK_W, FT_BOOK_H, 31, 220);
+  imgFrame(ctx, FT_BOOK_W, FT_BOOK_H, "moon");
+  ctx.textAlign = "center";
+  return [cv, ctx];
+}
+
+// 入る大きさまで字を小さくして、真ん中に1行で書く
+function ftFitText(ctx, text, x, y, size, maxW, weight = 600, min = 20) {
+  let fs = size;
+  ctx.font = `${weight} ${fs}px ${IMG_FONT}`;
+  while (ctx.measureText(text).width > maxW && fs > min) { fs -= 2; ctx.font = `${weight} ${fs}px ${IMG_FONT}`; }
+  ctx.fillText(text, x, y, maxW);
+  return fs;
+}
+
+// 上が先に登録した人。[{ side, name, photos }]
+function ftBookPeople() {
+  const me = { side: "me", name: ft.me.name, photos: ft.me.photos || [] };
+  const pa = { side: "partner", name: ft.partner.name, photos: ft.partner.photos || [] };
+  return ft.me.side === "b" ? [pa, me] : [me, pa];
+}
+
+async function ftBookPages(strict = false) {
+  const t = ftType();
+  const people = ftBookPeople();
+  const c = (ft.cakes || [])[0];
+  const day = ftCoverDate();
+  const notes = people.flatMap((p) => p.photos.map((x) => (x && x.note) || "")).join("");
+  await imgFonts(`ふたりの月${t.name}${t.kana}のふたり（）${people.map((p) => p.name).join("")}＆さん・へMoonlightより${t.prompts.map((p) => p[0]).join("")}${notes}${c ? c.name : ""}一二三写真なしふたりで見つけた景色が、この街の思い出になりますように。18夜の月0123456789.`);
+  const W = FT_BOOK_W, H = FT_BOOK_H, inner = W - 220;
+  const pages = [];
+
+  // 1. 表紙
+  let [cv, ctx] = ftBookCanvas();
+  await ftImgLogo(ctx);
+  ctx.fillStyle = imgGold(ctx, 260, 0, 820, 0);
+  ctx.font = `600 96px ${IMG_FONT}`;
+  imgSpaced(ctx, "ふたりの月", W / 2, 360, 18);
+  ctx.fillStyle = "#cfd6e6";
+  ctx.font = `500 40px ${IMG_FONT}`;
+  ctx.fillText(`${t.name}（${t.kana}）のふたり`, W / 2, 450);
+  const cakeIm = c ? await imgLoad(await ftAssetUrl(c.asset).catch(() => "")) : null;
+  if (strict && !cakeIm) return null;
+  if (cakeIm) ctx.drawImage(cakeIm, (W - 820) / 2, 500, 820, 820);
+  ctx.fillStyle = "#f3dfa8";
+  const pair = `${people[0].name} ＆ ${people[1].name}`;
+  ctx.font = `600 72px ${IMG_FONT}`;
+  if (ctx.measureText(pair).width <= inner) {
+    ctx.fillText(pair, W / 2, 1440);
+  } else {
+    const fs = Math.min(ftFitText(ctx, `${people[0].name} ＆`, W / 2, 1400, 64, inner), ftFitText(ctx, people[1].name, W / 2, 1480, 64, inner));
+    void fs;
+  }
+  imgRule(ctx, W / 2, 1530, 200);
+  ctx.fillStyle = "#cfd6e6";
+  if (c) ftFitText(ctx, c.name, W / 2, 1610, 40, inner, 500);
+  ctx.fillStyle = "#f3dfa8";
+  ctx.font = `600 52px ${IMG_EN}`;
+  if (day) ctx.fillText(day, W / 2, 1700);
+  pages.push(cv);
+
+  // 2〜4. お題ごと（ふたりの写真を上下に）
+  for (let i = 0; i < 3; i++) {
+    [cv, ctx] = ftBookCanvas();
+    await ftImgLogo(ctx);
+    ctx.fillStyle = "#f3dfa8";
+    ctx.font = `600 90px ${IMG_FONT}`;
+    ctx.fillText(IMG_KANJI_NUM[i + 1], W / 2, 290);
+    ftFitText(ctx, t.prompts[i][0], W / 2, 390, 58, inner);
+    imgRule(ctx, W / 2, 440, 160);
+    for (let j = 0; j < 2; j++) {
+      const who = people[j], ph = who.photos[i];
+      const x = 110, y = 500 + j * 690, pw = 860, phH = 484;
+      const im = ph ? await ftPhotoBitmap(who.side, i, ph) : null;
+      if (strict && ph && !im) return null;
+      ctx.save();
+      imgRoundRectPath(ctx, x, y, pw, phH, 14);
+      ctx.fillStyle = "#0d1630";
+      ctx.fill();
+      ctx.clip();
+      if (im) ftDrawCover(ctx, im, x, y, pw, phH);
+      else {
+        ctx.fillStyle = "#56627d";
+        ctx.font = `500 34px ${IMG_FONT}`;
+        ctx.fillText(ph ? "写真はページで" : "写真なし", x + pw / 2, y + phH / 2 + 12);
+      }
+      ctx.restore();
+      ctx.save();
+      imgRoundRectPath(ctx, x, y, pw, phH, 14);
+      ctx.strokeStyle = "rgba(214,179,101,.75)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#e3c886";
+      ftFitText(ctx, who.name, x + 4, y + phH + 62, 46, pw - 8);
+      if (ph && ph.note) {
+        ctx.fillStyle = "#cfd6e6";
+        ctx.font = `500 36px ${IMG_FONT}`;
+        imgWrapLines(ctx, ph.note, pw - 8).slice(0, 2).forEach((line, k) => ctx.fillText(line, x + 4, y + phH + 116 + k * 48));
+      }
+      ctx.textAlign = "center";
+    }
+    pages.push(cv);
+  }
+
+  // 5. おわり
+  [cv, ctx] = ftBookCanvas();
+  await ftImgLogo(ctx);
+  ctx.fillStyle = imgGold(ctx, 420, 500, 660, 740);
+  imgCrescent(ctx, W / 2, 640, 120, -0.45);
+  imgStar(ctx, W / 2 + 150, 540, 22);
+  ctx.fillStyle = "#d6b365";
+  ctx.font = `500 54px ${IMG_FONT}`;
+  ctx.fillText("Moonlight より", W / 2, 900);
+  ctx.fillStyle = "#f3dfa8";
+  const to = `${people[0].name}さん・${people[1].name}さんへ`;
+  ctx.font = `600 62px ${IMG_FONT}`;
+  if (ctx.measureText(to).width <= inner) ctx.fillText(to, W / 2, 1010);
+  else {
+    ftFitText(ctx, `${people[0].name}さん・`, W / 2, 990, 58, inner);
+    ftFitText(ctx, `${people[1].name}さんへ`, W / 2, 1070, 58, inner);
+  }
+  ctx.fillStyle = "#cfd6e6";
+  ctx.font = `500 42px ${IMG_FONT}`;
+  ctx.fillText("ふたりで見つけた景色が、", W / 2, 1200);
+  ctx.fillText("この街の思い出になりますように。", W / 2, 1270);
+  ctx.fillStyle = "#a99f80";
+  ctx.font = `500 38px ${IMG_FONT}`;
+  ctx.fillText("18夜の月 ・ ふたりの月", W / 2, 1440);
+  ctx.fillStyle = "#f3dfa8";
+  ctx.font = `600 48px ${IMG_EN}`;
+  if (day) ctx.fillText(day, W / 2, 1510);
+  pages.push(cv);
+  return pages;
+}
+
+// 5ページを保存（スマホは1枚ずつ長押しで保存できる画面、パソコンは5つのファイル）
+async function ftBookSave(btn) {
+  btn.disabled = true;
+  toast("本のページを作っています…");
+  try {
+    const pages = await ftBookPages();
+    if (isTouchDevice()) {
+      ftShowPages(pages.map((cv) => cv.toDataURL("image/jpeg", 0.92)));
+    } else {
+      for (let i = 0; i < pages.length; i++) {
+        await saveCanvas(pages[i], `moonlight-futari-${i + 1}.png`);
+        await ftSleep(350);
+      }
+      toast("5ページを保存しました");
+    }
+  } catch (e) {
+    toast(e.message || "保存できませんでした");
+  } finally {
+    if (btn.isConnected) btn.disabled = false;
+  }
+}
+
+function ftShowPages(urls) {
+  let ov = document.getElementById("ftPagesOverlay");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "ftPagesOverlay";
+    ov.className = "save-overlay ft-pages-overlay";
+    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("button")) ov.classList.add("hidden"); });
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `<div class="save-overlay-inner">
+      <p class="save-overlay-tip">1ページずつ<b>長押し</b>して<br>「"写真"に追加」（Androidは「画像をダウンロード」）で保存できます</p>
+      ${urls.map((u, i) => `<p class="ft-page-no">${i + 1} / ${urls.length}</p><img alt="${i + 1}ページ目" src="${u}">`).join("")}
+      <button class="btn" type="button">閉じる</button>
+    </div>`;
+  ov.classList.remove("hidden");
+  ov.scrollTop = 0;
+}
+
+// 開けたあと、まだ本のページがなければ作って置く（写真が全部読めたときだけ。だめならページを開き直したときにもう一度）
+async function ftBookEnsure() {
+  if (!ft || !ft.opened || ft.book || ftBookBusy || ftRevealing || !code) return;
+  if (Date.now() - ftBookTriedAt < 60000) return;
+  ftBookTriedAt = Date.now();
+  ftBookBusy = true;
+  try {
+    const pages = await ftBookPages(true);
+    if (!pages) return;
+    const data = pages.map((cv) => cv.toDataURL("image/jpeg", 0.88).split(",")[1]);
+    const r = await cakeRpc("cake_futari_book_put", { p_code: code, p_pages: data, p_mime: "image/jpeg", ...testArgs() });
+    if (r && r.ok) ft.book = true;
+  } catch {
+    // 次の機会にもう一度
+  } finally {
+    ftBookBusy = false;
   }
 }
 
@@ -1037,6 +1216,7 @@ function futariInit() {
     else if (act === "open") ftStartWait();
     else if (act === "stop") ftStopWait(true);
     else if (act === "save") ftSave(b);
+    else if (act === "book") ftBookSave(b);
     else if (act === "toalbum") document.querySelector("#ftRoot .ft-album")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   root.addEventListener("submit", (e) => {

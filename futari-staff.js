@@ -1,9 +1,10 @@
-// futari-staff.js — 受付の「ふたりの月」：カップル・夫婦のふたりの参加登録と、進み具合の一覧。
+// futari-staff.js — 受付の「ふたりの月」：大切な人とふたり（恋人・夫婦・友だち・家族など）の参加登録と、進み具合の一覧。
 // 箱を開けたふたりが来たら、渡すホールケーキを確かめて「受け取り」（お代はいただかない）。staff.js の start から fsInit を呼ぶ。
 "use strict";
 
 const FS_TYPE_NAMES = { yoizuki: "宵月", izayoi: "十六夜", ariake: "有明", oborozuki: "朧月", matsuyoi: "待宵" };
 let fsRows = [];
+let fsCakeNames = {};       // 月 → 渡すホールケーキの名前（受付の一覧と一緒に Supabase から届く）
 const fsPicked = [null, null];   // { query, name, isNew, fromApp, code }
 const fsSug = [[], []];
 const fsTimer = [null, null];
@@ -11,7 +12,8 @@ const fsSeq = [0, 0];
 let fsBusy = false;
 
 function fsBoxName(type) {
-  return FS_TYPE_NAMES[type] ? `${FS_TYPE_NAMES[type]}のホールケーキ` : "";
+  if (!FS_TYPE_NAMES[type]) return "";
+  return fsCakeNames[type] ? `${FS_TYPE_NAMES[type]} ・ ${fsCakeNames[type]}` : `${FS_TYPE_NAMES[type]}のホールケーキ`;
 }
 
 function fsStatus(r) {
@@ -28,6 +30,10 @@ async function fsLoad() {
   try {
     const res = await cakeRpc("cake_staff_futari_list", { p_pass: pass, ...testArgs() });
     fsRows = Array.isArray(res && res.rows) ? res.rows : [];
+    fsCakeNames = res && res.cakes && typeof res.cakes === "object" ? res.cakes : {};
+    const legend = Object.keys(FS_TYPE_NAMES).filter((t) => fsCakeNames[t]);
+    $("fsCakes").innerHTML = legend.length ? `<b>渡すホールケーキ</b>${legend.map((t) => `<div><span>${FS_TYPE_NAMES[t]}</span>${cakeEsc(fsCakeNames[t])}</div>`).join("")}` : "";
+    $("fsCakes").classList.toggle("hidden", !legend.length);
     const waiting = fsRows.filter((r) => r.opened_at && !r.received_at).length;
     $("fsCount").textContent = `${fsRows.length}組${waiting ? `・受け取り待ち${waiting}` : ""}`;
     $("fsTabSub").textContent = waiting ? `受け取り待ち ${waiting}組` : `参加 ${fsRows.length}組`;
@@ -43,8 +49,8 @@ async function fsLoad() {
           : `<button class="btn ghost sm" type="button" data-fs-leave="${i}">参加取消</button>`;
       return `<div class="li${r.opened_at && !r.received_at ? " fs-wait" : ""}${r.received_at ? " fs-done-row" : ""}">
         <div><b>${cakeEsc(r.a.name)}</b> ＆ <b>${cakeEsc(r.b.name)}</b>${fsStatus(r)}
-          ${r.opened_at && !r.received_at ? `<div class="fs-box">🎁 ${fsBoxName(r.type)}</div>` : ""}
-          <div class="meta">No.${String(r.no).padStart(3, "0")} ・ アルバム ${cakeEsc(r.a.code)} / ${cakeEsc(r.b.code)}${r.type && !r.opened_at ? ` ・ ${FS_TYPE_NAMES[r.type] || ""}のふたり` : ""}</div>
+          ${r.opened_at && !r.received_at ? `<div class="fs-box">🎁 ${cakeEsc(fsBoxName(r.type))}</div>` : ""}
+          <div class="meta">アルバム ${cakeEsc(r.a.code)} / ${cakeEsc(r.b.code)}${r.type && !r.opened_at ? ` ・ ${FS_TYPE_NAMES[r.type] || ""}のふたり` : ""}</div>
           <div class="meta">${meta}</div></div>
         <div class="li-actions">${actions}</div></div>`;
     }).join("") || '<div class="small muted">まだ参加しているふたりはいません</div>';
@@ -133,7 +139,7 @@ async function fsJoin() {
       ? `<div class="r new"><b>${cakeEsc(x.name)}</b>　はじめてのお客さん<div class="code">${cakeEsc(x.code)}</div>
           <div class="small">「アルバム番号は <b>${cakeEsc(x.code)}</b> です」と伝えてください</div></div>`
       : `<div class="r"><b>${cakeEsc(x.name)}</b>　アルバム ${cakeEsc(x.code)}</div>`;
-    $("fsResult").innerHTML = `<div class="r new"><b>${cakeEsc(r.a.name)} ＆ ${cakeEsc(r.b.name)}</b>　ふたりの月に参加しました（No.${String(r.no).padStart(3, "0")}）
+    $("fsResult").innerHTML = `<div class="r new"><b>${cakeEsc(r.a.name)} ＆ ${cakeEsc(r.b.name)}</b>　ふたりの月に参加しました
         <div class="small">ふたりのアルバムに「ふたり」のタブが増えました。まず、ひとりずつ心理テストに答えてもらってください。</div></div>`
       + person(r.a) + person(r.b);
     $("fsResult").classList.remove("hidden");

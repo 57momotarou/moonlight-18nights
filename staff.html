@@ -7,8 +7,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=38">
-<link rel="stylesheet" href="futari.css?v=38">
+<link rel="stylesheet" href="album.css?v=40">
+<link rel="stylesheet" href="futari.css?v=40">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -124,14 +124,14 @@
     </section>
     </div>
 
-    <!-- 「ふたりの月」（カップル・夫婦向け） -->
+    <!-- 「ふたりの月」（大切な人とふたりで） -->
     <div data-desk-panel="futari" class="hidden">
     <section class="card" id="fsCard">
       <div class="topline" style="margin-bottom:6px">
         <h2 style="margin:0">🌙 ふたりの月</h2>
         <span class="small muted" id="fsCount"></span>
       </div>
-      <p class="small muted" style="margin:0 0 8px">カップル・夫婦で「参加したい」と言ってくれたふたりを登録します。参加は無料です。ふたりのアルバムに「ふたり」のタブが増えます。アルバムがない人には番号を発行します。</p>
+      <p class="small muted" style="margin:0 0 8px">大切な人と「ふたりで参加したい」と言ってくれたふたりを登録します（恋人・夫婦・友だち・家族など、どんなふたりでも参加できます）。参加は無料です。ふたりのアルバムに「ふたり」のタブが増えます。アルバムがない人には番号を発行します。</p>
       <div class="field">
         <label for="fsInput0">ひとりめ（名前か4桁の番号）</label>
         <input type="text" id="fsInput0" maxlength="40" autocomplete="off" enterkeyhint="done">
@@ -148,7 +148,7 @@
       <p class="error" id="fsError"></p>
       <div class="result hidden" id="fsResult"></div>
       <h3 style="margin:14px 0 6px;font-family:var(--mincho);color:var(--gold2)">参加しているふたり</h3>
-      <div class="dlv-guide small">箱を開けたふたりが来たら、🎁 のホールケーキを作って渡し、「受け取り」を押してください（お代はいただきません）。渡すときに「ゲームの写真は街が終わると見られなくなるかもしれないので、アルバムを画像で保存しておいてくださいね」と声をかけてください。</div>
+      <div class="fs-cakes small hidden" id="fsCakes"></div>
       <div class="list" id="fsList"></div>
     </section>
     </div>
@@ -157,8 +157,8 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=38"></script>
-<script src="futari-staff.js?v=38"></script>
-<script src="staff.js?v=38"></script>
+<script src="cake-api.js?v=40"></script>
+<script src="futari-staff.js?v=40"></script>
+<script src="staff.js?v=40"></script>
 </body>
 </html>
