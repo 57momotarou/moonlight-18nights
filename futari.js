@@ -1,6 +1,6 @@
 // futari.js — 「ふたりの月」：受付で参加を登録したふたり（恋人・夫婦・友だち・家族など、大切な人とふたり）のアルバムにだけ出るタブ。
 // 流れ：心理テスト（ひとりずつ・相手には見えない）→ ふたりの月のタイプとお題3つ → お題の写真のURLを貼る（相手の写真は開けるまで見えない）
-//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 写真が集まってケーキが表紙のアルバム・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
+//       → ふたりそろって「ふたりで開ける」（サーバーの時刻で同時にカウントダウン）→ 写真が1枚ずつ重なってまとまり、ケーキが表紙のアルバム・ふたりのアルバム → 店頭でケーキ（2個セット）を受け取る。
 // 進み具合・相手の写真・ケーキの名前と画像の鍵は Supabase から届く（cake_futari ほか）。ケーキの画像は assets/*.bin（暗号化済み）。
 "use strict";
 
@@ -618,6 +618,7 @@ function ftBoxHtml(state) {
   return `<div class="ft-box ${state}" id="ftBox">
     <div class="ft-box-glow"></div>
     ${pics}
+    <div class="ft-ring"></div>
     <div class="ft-flash"></div>
     <button type="button" class="ft-cover" data-ft-act="toalbum" aria-label="ふたりのアルバムを見る">
       <span class="ft-cover-title">ふたりの月</span>
@@ -787,9 +788,9 @@ function ftKeepHtml() {
   const saved = Boolean(ftFlag("saved"));
   return `<div class="ft-keep${saved ? " saved" : ""}" id="ftKeep">
       <b class="ft-keep-title">${saved ? "✓ 画像で保存しました" : "📷 アルバムを画像で保存しましょう"}</b>
-      <p>ゲームの写真は、街が終わると見られなくなることがあります。ふたりの写真とケーキを<span class="nw">1枚の画像</span>にまとめるか、街の本と同じ<span class="nw">5ページ</span>に分けて、スマホやパソコンに残せます。</p>
+      <p>ゲームの写真は、街が終わると見られなくなることがあります。ふたりの写真とケーキを<span class="nw">1枚の画像</span>にまとめるか、街の本と同じ<span class="nw">6ページ</span>に分けて、スマホやパソコンに残せます。</p>
       <button class="btn block${saved ? "" : " glow"}" type="button" data-ft-act="save" id="ftSaveBtn">${saved ? "1枚にまとめて、もう一度保存" : "1枚にまとめて保存"}</button>
-      <button class="btn ghost block ft-book-btn" type="button" data-ft-act="book">本のページ（5枚）で保存</button>
+      <button class="btn ghost block ft-book-btn" type="button" data-ft-act="book">本のページ（6枚）で保存</button>
       <p class="small muted">写真をタップすると大きく見られます。長押し（パソコンは右クリック）で、写真を<span class="nw">1枚ずつ</span>保存することもできます。</p>
     </div>`;
 }
@@ -811,7 +812,7 @@ async function ftPlayReveal() {
     await ftSleep(500);
     box.classList.remove("closed", "counting");
     box.classList.add("opening");
-    await ftSleep(3900);
+    await ftSleep(5600);   // 表になる → 1枚ずつ重なる → ピタッとまとまる → 光る → 表紙
     box.classList.remove("opening");
     box.classList.add("opened");
     ftFlag("revealed", "1");
@@ -983,8 +984,8 @@ async function ftSave(btn) {
   }
 }
 
-// ---------- 街の本（ブックメーカー用の5ページ。1080×1920） ----------
-// 1＝表紙 2〜4＝お題ごとの写真 5＝おわり。上（先）に登録が先の人の写真。
+// ---------- 街の本（ブックメーカー用の6ページ。1080×1920） ----------
+// 1＝表紙 2〜4＝お題ごとの写真 5＝おわり 6＝背表紙（ブックメーカーに背表紙の欄はないので最後のページ）。上（先）に登録が先の人の写真。
 // 開けたあと、ページを開いた人の端末で1回作って Supabase に置く（Windows がそこから fivemanage に上げて URL を出す）。
 const FT_BOOK_W = 1080, FT_BOOK_H = 1920;
 let ftBookBusy = false;
@@ -1128,10 +1129,27 @@ async function ftBookPages(strict = false) {
   ctx.font = `600 48px ${IMG_EN}`;
   if (day) ctx.fillText(day, W / 2, 1510);
   pages.push(cv);
+
+  // 6. 背表紙（紺に金の枠・月と星・ロゴと店名だけ）
+  [cv, ctx] = ftBookCanvas();
+  ctx.fillStyle = imgGold(ctx, 440, 640, 640, 840);
+  imgCrescent(ctx, W / 2, 760, 96, -0.45);
+  imgStar(ctx, W / 2 + 122, 680, 18);
+  imgStar(ctx, W / 2 - 150, 860, 10);
+  imgRule(ctx, W / 2, 960, 180);
+  const logo = await imgLoad("icons/icon-192.png");
+  if (logo) ctx.drawImage(logo, W / 2 - 60, 1040, 120, 120);
+  ctx.fillStyle = "rgba(226,201,140,.95)";
+  ctx.font = `italic 500 52px ${IMG_EN}`;
+  ctx.fillText("cafe & bar Moonlight", W / 2, 1230);
+  ctx.fillStyle = "#a99f80";
+  ctx.font = `500 34px ${IMG_FONT}`;
+  ctx.fillText("18夜の月 ・ ふたりの月", W / 2, 1300);
+  pages.push(cv);
   return pages;
 }
 
-// 5ページを保存（スマホは1枚ずつ長押しで保存できる画面、パソコンは5つのファイル）
+// 6ページを保存（スマホは1枚ずつ長押しで保存できる画面、パソコンは6つのファイル）
 async function ftBookSave(btn) {
   btn.disabled = true;
   toast("本のページを作っています…");
@@ -1144,7 +1162,7 @@ async function ftBookSave(btn) {
         await saveCanvas(pages[i], `moonlight-futari-${i + 1}.png`);
         await ftSleep(350);
       }
-      toast("5ページを保存しました");
+      toast("6ページを保存しました");
     }
   } catch (e) {
     toast(e.message || "保存できませんでした");

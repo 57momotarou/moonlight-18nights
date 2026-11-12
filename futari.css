@@ -139,20 +139,31 @@
 .ft-box.partner-ready .ft-box-glow,.ft-box.counting .ft-box-glow{animation:ftGlowPulse 1.6s ease-in-out infinite}
 @keyframes ftBob{0%,100%{margin-top:calc(var(--bw)*-.1125)}50%{margin-top:calc(var(--bw)*-.1125 - 5px)}}
 @keyframes ftGlowPulse{0%,100%{opacity:.55}50%{opacity:1}}
-/* 開ける：表になる → 集まる → 光る → 表紙 */
+/* 開ける：表になる → 1枚ずつ重なる → ピタッとまとまる → 光る → 表紙 */
 .ft-box.opening .ft-pic-in{transform:rotateY(180deg)}
 .ft-box.opening .ft-pic:nth-child(2) .ft-pic-in,.ft-box.opening .ft-pic:nth-child(5) .ft-pic-in{transition-delay:.12s}
 .ft-box.opening .ft-pic:nth-child(3) .ft-pic-in,.ft-box.opening .ft-pic:nth-child(6) .ft-pic-in{transition-delay:.24s}
-.ft-box.opening .ft-pic{animation:ftGather 1.5s 1s cubic-bezier(.5,0,.3,1) forwards}
+/* 1枚ずつ左右交互に真ん中へ重なる（--d＝飛ぶ順番、--sr/--sx/--sy＝重なったときの少しのずれ）→ そろったらピタッと1冊にまとまる */
+.ft-pic.p0{--d:1.5s;--sr:-6deg;--sx:-5px;--sy:3px;--z:2}.ft-pic.p3{--d:1.67s;--sr:5deg;--sx:5px;--sy:-2px;--z:3}
+.ft-pic.p1{--d:1.84s;--sr:-3deg;--sx:-3px;--sy:-4px;--z:4}.ft-pic.p4{--d:2.01s;--sr:4deg;--sx:4px;--sy:4px;--z:5}
+.ft-pic.p2{--d:2.18s;--sr:-2deg;--sx:-2px;--sy:2px;--z:6}.ft-pic.p5{--d:2.35s;--sr:1deg;--sx:2px;--sy:-1px;--z:7}
+.ft-box.opening .ft-pic{z-index:var(--z);animation:ftGather .65s var(--d) cubic-bezier(.45,0,.25,1) forwards,ftMerge .9s 3.1s cubic-bezier(.4,0,.3,1) forwards}
 .ft-box.opening .ft-box-glow{opacity:0;transition:opacity .4s}
-.ft-box.opening .ft-flash{animation:ftFlash 2s 1.7s ease-in-out both}
-.ft-box.opening .ft-cover{visibility:visible;animation:ftCoverIn 1.1s 2.6s cubic-bezier(.2,.8,.25,1) both}
+.ft-ring{position:absolute;left:50%;top:calc(var(--bw)*.43);width:calc(var(--bw)*.42);height:calc(var(--bw)*.42);margin:calc(var(--bw)*-.21) 0 0 calc(var(--bw)*-.21);border-radius:50%;border:2px solid rgba(240,212,140,.95);box-shadow:0 0 18px rgba(255,226,150,.8),inset 0 0 14px rgba(255,226,150,.6);opacity:0;pointer-events:none;z-index:8}
+.ft-box.opening .ft-ring{animation:ftRing 1s 3.5s ease-out both}
+.ft-box.opening .ft-flash{z-index:9;animation:ftFlash 1.9s 3.6s ease-in-out both}
+.ft-box.opening .ft-cover{z-index:10;visibility:visible;animation:ftCoverIn 1.1s 4.4s cubic-bezier(.2,.8,.25,1) both}
 .ft-box.opening .ft-sparks i,.ft-box.opened .ft-sparks i{animation:ftTwinkle 2.6s ease-in-out infinite}
-.ft-box.opening .ft-sparks i:nth-child(odd),.ft-box.opened .ft-sparks i:nth-child(odd){animation-delay:2.8s}
-.ft-box.opening .ft-sparks i:nth-child(even),.ft-box.opened .ft-sparks i:nth-child(even){animation-delay:3.5s}
-.ft-box.opened .ft-pic,.ft-box.opened .ft-box-glow,.ft-box.opened .ft-flash{display:none}
+.ft-box.opening .ft-sparks i:nth-child(odd),.ft-box.opened .ft-sparks i:nth-child(odd){animation-delay:4.6s}
+.ft-box.opening .ft-sparks i:nth-child(even),.ft-box.opened .ft-sparks i:nth-child(even){animation-delay:5.3s}
+.ft-box.opened .ft-pic,.ft-box.opened .ft-box-glow,.ft-box.opened .ft-flash,.ft-box.opened .ft-ring{display:none}
 .ft-box.opened .ft-cover{opacity:1;visibility:visible}
-@keyframes ftGather{0%{opacity:1}70%{opacity:1;left:50%;top:calc(var(--bw)*.43);transform:rotate(calc(var(--r)*6)) scale(.85)}100%{opacity:0;left:50%;top:calc(var(--bw)*.43);transform:rotate(calc(var(--r)*8)) scale(.5)}}
+@keyframes ftGather{0%{transform:rotate(var(--r))}80%{left:50%;top:calc(var(--bw)*.43);transform:rotate(var(--sr)) translate(var(--sx),var(--sy)) scale(1.06)}100%{left:50%;top:calc(var(--bw)*.43);transform:rotate(var(--sr)) translate(var(--sx),var(--sy)) scale(1)}}
+@keyframes ftMerge{0%{left:50%;top:calc(var(--bw)*.43);transform:rotate(var(--sr)) translate(var(--sx),var(--sy)) scale(1);filter:none;opacity:1}
+  40%{left:50%;top:calc(var(--bw)*.43);transform:none;filter:none;opacity:1}
+  55%{left:50%;top:calc(var(--bw)*.43);transform:scale(1.08);filter:brightness(1.25);opacity:1}
+  100%{left:50%;top:calc(var(--bw)*.43);transform:scale(.9);filter:brightness(2.2);opacity:0}}
+@keyframes ftRing{0%{opacity:0;transform:scale(.6)}20%{opacity:1}100%{opacity:0;transform:scale(2.6)}}
 @keyframes ftFlash{0%{opacity:0;transform:scale(.2)}40%{opacity:1;transform:scale(.75)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 @keyframes ftCoverIn{0%{opacity:0;transform:scale(.72)}100%{opacity:1;transform:none}}
 @keyframes ftTwinkle{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
@@ -207,3 +218,5 @@
 .ft-book-btn{margin-top:8px}
 .ft-pages-overlay img{display:block;width:min(78vw,340px);height:auto;margin:0 auto 6px;border-radius:6px}
 .ft-page-no{margin:12px 0 4px;text-align:center;color:var(--gold2);font-family:var(--mincho)}
+/* 受付の名前：「＆」は必ず前の人の後ろにつける */
+.fs-name{display:inline-block;max-width:100%;overflow-wrap:anywhere}

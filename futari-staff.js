@@ -48,7 +48,7 @@ async function fsLoad() {
           ? `<button class="btn sm" type="button" data-fs-recv="${i}">受け取り</button>`
           : `<button class="btn ghost sm" type="button" data-fs-leave="${i}">参加取消</button>`;
       return `<div class="li${r.opened_at && !r.received_at ? " fs-wait" : ""}${r.received_at ? " fs-done-row" : ""}">
-        <div><b>${cakeEsc(r.a.name)}</b> ＆ <b>${cakeEsc(r.b.name)}</b>${fsStatus(r)}
+        <div><span class="fs-name"><b>${cakeEsc(r.a.name)}</b> ＆</span> <span class="fs-name"><b>${cakeEsc(r.b.name)}</b></span>${fsStatus(r)}
           ${r.opened_at && !r.received_at ? `<div class="fs-box">🎁 ${cakeEsc(fsBoxName(r.type))}</div>` : ""}
           <div class="meta">アルバム ${cakeEsc(r.a.code)} / ${cakeEsc(r.b.code)}${r.type && !r.opened_at ? ` ・ ${FS_TYPE_NAMES[r.type] || ""}のふたり` : ""}</div>
           <div class="meta">${meta}</div></div>
