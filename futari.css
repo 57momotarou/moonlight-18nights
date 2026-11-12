@@ -78,7 +78,7 @@
 .ft-note{font-family:var(--mincho);font-size:14px;color:var(--moon);margin:6px 2px 0}
 .ft-slot-tools{display:flex;gap:14px;justify-content:flex-end;margin-top:6px}
 .ft-form{display:grid;gap:8px}
-.ft-form input{width:100%;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--line2);background:#0b1222;font-size:14px}
+.ft-form input{width:100%;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--line2);background:#0b1222;font-size:16px}
 .ft-form input:focus{outline:2px solid var(--gold);outline-offset:1px}
 .ft-form-row{display:flex;gap:8px;justify-content:flex-end}
 .ft-msg{margin:0;font-size:13px;color:var(--danger);min-height:1em}
