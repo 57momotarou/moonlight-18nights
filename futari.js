@@ -66,7 +66,9 @@ let ftCopyOff = false;           // Supabase で控えを取れない（http 拡
 
 // ---------- 小物 ----------
 function ftFlag(name, value) {
-  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}`;
+  // 開けた演出・保存は「どのふたりで開けたか」ごとに覚える（同じ番号の人が取り消して別のふたりで参加し直しても、演出がちゃんと流れるように）
+  const pair = (name === "revealed" || name === "saved") ? `-${(ft && ft.open_at) || ""}` : "";
+  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}${pair}`;
   if (value === undefined) return cakeStore(key);
   cakeStore(key, value === null ? null : String(value));
   return value;

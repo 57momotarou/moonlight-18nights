@@ -108,13 +108,13 @@
 .ft-flash{position:absolute;left:50%;top:calc(var(--bw)*.43);width:calc(var(--bw)*1.5);height:calc(var(--bw)*1.5);margin:calc(var(--bw)*-.75) 0 0 calc(var(--bw)*-.75);border-radius:50%;opacity:0;pointer-events:none;z-index:3;
   background:radial-gradient(circle,rgba(255,246,214,.98) 0,rgba(255,232,170,.75) 22%,rgba(255,226,150,.25) 48%,rgba(255,226,150,0) 70%)}
 /* ケーキが表紙のアルバム */
-.ft-cover{position:absolute;left:8%;right:8%;top:calc(var(--bw)*.05);height:calc(var(--bw)*1.36);z-index:4;display:block;box-sizing:border-box;margin:0;padding:calc(var(--bw)*.085) calc(var(--bw)*.065) 0 calc(var(--bw)*.09);border:0;-webkit-appearance:none;appearance:none;border-radius:calc(var(--bw)*.04);
+.ft-cover{position:absolute;left:8%;right:8%;top:calc(var(--bw)*.05);height:calc(var(--bw)*1.36);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;margin:0;padding:calc(var(--bw)*.06) calc(var(--bw)*.065) calc(var(--bw)*.07) calc(var(--bw)*.09);border:0;-webkit-appearance:none;appearance:none;border-radius:calc(var(--bw)*.04);
   color:#f3dfa8;font-family:var(--mincho);text-align:center;cursor:pointer;opacity:0;visibility:hidden;
   background:linear-gradient(90deg,#121a3a 0,#121a3a 3.5%,#1b2650 3.6%,#1a244c 100%);box-shadow:0 18px 40px rgba(0,0,0,.5),0 0 0 1px rgba(214,179,101,.3)}
 .ft-cover::before,.ft-cover::after{content:"";position:absolute;pointer-events:none;border-radius:calc(var(--bw)*.025)}
 .ft-cover::before{inset:calc(var(--bw)*.035) calc(var(--bw)*.035) calc(var(--bw)*.035) calc(var(--bw)*.06);border:1.5px solid rgba(214,179,101,.9)}
 .ft-cover::after{inset:calc(var(--bw)*.052) calc(var(--bw)*.052) calc(var(--bw)*.052) calc(var(--bw)*.077);border:1px solid rgba(214,179,101,.45)}
-.ft-cover>span{display:block;margin-left:auto;margin-right:auto}
+.ft-cover>span{display:block;flex:none;margin-left:auto;margin-right:auto}  /* 表紙の中身は上下のまん中に */
 .ft-cover-title{font-size:calc(var(--bw)*.068);font-weight:600;letter-spacing:.3em;text-indent:.3em;line-height:1.3}
 .ft-cover-shop{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:calc(var(--bw)*.04);color:#c9a35a;line-height:1.4}
 .ft-cover-cake{position:relative;width:calc(var(--bw)*.68);height:calc(var(--bw)*.68);margin-top:calc(var(--bw)*.02);
