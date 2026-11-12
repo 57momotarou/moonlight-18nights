@@ -809,6 +809,11 @@ async function ftPlayReveal() {
   ftRevealing = true;
   try {
     await Promise.race([ftHydrate(box), ftSleep(6000)]);   // ケーキの画像を先に開いておく
+    // 別の画面やタブを見ているあいだは始めない（裏で終わってしまわないように、ページが見えてから流す）
+    if (document.hidden) await new Promise((ok) => {
+      const on = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", on); ok(); } };
+      document.addEventListener("visibilitychange", on);
+    });
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     await ftSleep(500);
     box.classList.remove("closed", "counting");

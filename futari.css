@@ -219,3 +219,5 @@
 /* 受付の名前：「＆」は必ず前の人の後ろにつける */
 .fs-name{display:inline-block;max-width:100%;overflow-wrap:anywhere}
 .ft-cover.locked{cursor:default}
+/* 開ける演出の光・輪が画面の横にはみ出して、スマホでページ全体が横にずれないように、カードの中で切る */
+.ft-ready,.ft-gift{overflow:hidden;overflow:clip}
