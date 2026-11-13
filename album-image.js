@@ -527,10 +527,10 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
   // 一緒に来た人の名前：人数が多いほど文字を小さくし、全員が入るようにケーキ画像を縮める
   let nameFs = 36, nameLines = [];
   if (withNames.length) {
-    for (nameFs of [36, 32, 28, 25, 22]) {
+    for (nameFs of [36, 32, 28, 25, 22, 19]) {
       ctx.font = `500 ${nameFs}px ${IMG_FONT}`;
       nameLines = imgWrapNames(ctx, withNames, W - 300);
-      if (nameLines.length <= (nameFs >= 32 ? 2 : nameFs >= 28 ? 3 : 5)) break;
+      if (nameLines.length <= (nameFs >= 32 ? 2 : nameFs >= 28 ? 3 : nameFs >= 22 ? 5 : 8)) break;
     }
   }
   const nameLH = Math.round(nameFs * 1.38);

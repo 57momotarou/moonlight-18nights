@@ -66,9 +66,7 @@ let ftCopyOff = false;           // Supabase で控えを取れない（http 拡
 
 // ---------- 小物 ----------
 function ftFlag(name, value) {
-  // 開けた演出・保存は「どのふたりで開けたか」ごとに覚える（同じ番号の人が取り消して別のふたりで参加し直しても、演出がちゃんと流れるように）
-  const pair = (name === "revealed" || name === "saved") ? `-${(ft && ft.open_at) || ""}` : "";
-  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}${pair}`;
+  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}`;
   if (value === undefined) return cakeStore(key);
   cakeStore(key, value === null ? null : String(value));
   return value;
@@ -811,11 +809,6 @@ async function ftPlayReveal() {
   ftRevealing = true;
   try {
     await Promise.race([ftHydrate(box), ftSleep(6000)]);   // ケーキの画像を先に開いておく
-    // 別の画面やタブを見ているあいだは始めない（裏で終わってしまわないように、ページが見えてから流す）
-    if (document.hidden) await new Promise((ok) => {
-      const on = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", on); ok(); } };
-      document.addEventListener("visibilitychange", on);
-    });
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     await ftSleep(500);
     box.classList.remove("closed", "counting");

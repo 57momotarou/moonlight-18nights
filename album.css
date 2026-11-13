@@ -35,8 +35,6 @@ body.stage-2{background:radial-gradient(120% 70% at 50% -10%,#1d2a5c 0%,#0a1024 
 body.stage-3{background:radial-gradient(120% 70% at 50% -10%,#2a3468 0%,#0d1430 55%,var(--bg) 100%) fixed}
 body.stage-4{background:radial-gradient(120% 70% at 50% -10%,#3b3f72 0%,#151a3a 50%,#0a0e1f 100%) fixed}
 button,input,textarea{font:inherit;color:inherit}
-/* スマホで入力欄を押したとき画面が拡大されないように、入力欄の文字は16px以上（iPhone は16px未満だと拡大する。大きくしている欄はそれぞれの指定のまま） */
-input,textarea,select{font-size:16px}
 button{cursor:pointer}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
