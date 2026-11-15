@@ -47,7 +47,8 @@ let ft = null;              // cake_futari の結果（参加していなけれ�
 let ftShown = "";           // いま描いている状態。同じなら描き直さない（入力中・演出中を消さない）
 let ftDirty = false;        // 入力中で描き直しを後回しにした
 let ftBusy = false;
-let ftQuiz = null;          // 心理テストの途中 { i, picks }
+let ftQuiz = null;          // 心理テストの途中 { i, picks, edit（送ったあとに答えなおし中）, back（確認から1問だけなおしに来た） }
+let ftEditTimer = null;     // 答えなおし中の合図（なおしているあいだ、ふたりの月を決めないようにする）
 let ftEditSlot = null;      // 差し替え中のお題
 let ftOffset = 0;           // サーバーの時刻 − 端末の時刻（ミリ秒）
 let ftWaiting = false;      // 「ふたりで開ける」を押して相手を待っている
@@ -66,7 +67,9 @@ let ftCopyOff = false;           // Supabase で控えを取れない（http 拡
 
 // ---------- 小物 ----------
 function ftFlag(name, value) {
-  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}`;
+  // 開けた演出・保存は「どのふたりで開けたか」ごとに覚える（同じ番号の人が取り消して別のふたりで参加し直しても、演出がちゃんと流れるように）
+  const pair = (name === "revealed" || name === "saved") ? `-${(ft && ft.open_at) || ""}` : "";
+  const key = `moonlight-ft-${name}-${code}${CAKE_TEST ? "-demo" : ""}${pair}`;
   if (value === undefined) return cakeStore(key);
   cakeStore(key, value === null ? null : String(value));
   return value;
@@ -239,6 +242,7 @@ function futariReset() {
   ft = null;
   ftShown = "";
   ftQuiz = null;
+  ftEditBeat(false);
   ftEditSlot = null;
   ftMoreOpen = false;
   ftRevealing = false;
@@ -256,10 +260,10 @@ function renderFutari(force = false) {
   ftFlag("news", ftNewsKey());
   ftTabBtn()?.classList.remove("has-news");
   if (ftRevealing) return;
-  if (ft.type) ftQuiz = null;
+  if (ft.type) { ftQuiz = null; ftEditBeat(false); }
   const st = ftStage();
   const key = [code, st, ft.type, ft.me.answered, ft.partner.answered, JSON.stringify(ft.me.photos), (ft.partner.slots || []).join(","),
-    ft.open_at || "", ft.received_at || "", ftQuiz ? `${ftQuiz.i}:${ftQuiz.picks.join(",")}` : "-", ftEditSlot ?? "-"].join("|");
+    ft.open_at || "", ft.received_at || "", ftQuiz ? `${ftQuiz.i}:${ftQuiz.picks.join(",")}:${ftQuiz.edit ? 1 : 0}${ftQuiz.back ? 1 : 0}` : "-", ftEditSlot ?? "-", ft.partner.editing ? 1 : 0].join("|");
   const typing = root.contains(document.activeElement) && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
   if (!force && (key === ftShown || typing)) {
     if (key !== ftShown) ftDirty = true;
@@ -298,48 +302,110 @@ function ftHeadHtml(st) {
 // ---------- 心理テスト ----------
 function ftQuizHtml() {
   const pn = ftPn();
+  const total = FT_QUESTIONS.length;
+  // 答えなおしの途中でページを開き直したときは、なおしの続きから
+  if (ft.me.answered && !ftQuiz && ft.me.editing && Array.isArray(ft.me.answers)) {
+    ftQuiz = { i: total, picks: [...ft.me.answers], edit: true };
+    ftEditBeat(true);
+  }
   if (ft.me.answered && !ftQuiz) {
+    const pe = ft.partner.editing;
     return `<section class="card ft-wait-card center">
       <div class="ft-wait-moon" aria-hidden="true">${moonSvg(0.5, 70, true)}</div>
       <h2>答えは届いています</h2>
-      <p class="ft-story">${pn}さんが答えると、<br>ふたりの月が決まります。</p>
+      <p class="ft-story">${pe ? `${pn}さんが答えをなおしています。<br>なおし終わると、ふたりの月が決まります。` : `${pn}さんが答えると、<br>ふたりの月が決まります。`}</p>
       <p class="small muted">相手の答えは、ふたりとも見られません。</p>
-      <button class="linklike" type="button" data-ft-act="redo">答えなおす</button>
+      <button class="linklike" type="button" data-ft-act="editans">答えなおす</button>
     </section>`;
   }
   if (!ftQuiz) ftQuiz = { i: 0, picks: [] };
-  const total = FT_QUESTIONS.length;
-  const dots = FT_QUESTIONS.map((_, i) => `<i class="${i < ftQuiz.i ? "done" : i === ftQuiz.i ? "cur" : ""}"></i>`).join("");
+  const ed = Boolean(ftQuiz.edit);
+  const dots = FT_QUESTIONS.map((_, i) => `<i class="${ftQuiz.picks[i] && i !== ftQuiz.i ? "done" : i === ftQuiz.i ? "cur" : ""}"></i>`).join("");
   if (ftQuiz.i >= total) {
-    const rows = FT_QUESTIONS.map((q, i) => `<li><span class="small muted">Q${i + 1} ${cakeEsc(q.q)}</span><b>${cakeEsc(q.a[FT_KEYS.indexOf(ftQuiz.picks[i])])}</b></li>`).join("");
+    const rows = FT_QUESTIONS.map((q, i) => `<li><button type="button" class="ft-q-row" data-ft-qgo="${i}"><span class="small muted">Q${i + 1} ${cakeEsc(q.q)}</span><b>${cakeEsc(q.a[FT_KEYS.indexOf(ftQuiz.picks[i])])}</b><span class="ft-q-fix">なおす</span></button></li>`).join("");
     return `<section class="card ft-quiz appear">
-      <div class="ft-q-top"><span class="ft-eyebrow">心理テスト</span><span class="ft-q-num">確認</span></div>
+      <div class="ft-q-top"><span class="ft-eyebrow">心理テスト</span><span class="ft-q-num">${ed ? "答えなおし" : "確認"}</span></div>
       <div class="ft-q-dots">${dots}</div>
-      <h2>この答えで送りますか？</h2>
+      <h2>${ed ? "なおしたい答えを押してください" : "この答えで送りますか？"}</h2>
+      <p class="small muted ft-q-hint">${ed ? `なおしているあいだは、ふたりの月は決まりません。` : "変えたい答えを押すと、その質問だけなおせます。"}</p>
       <ol class="ft-q-sum">${rows}</ol>
-      <button class="btn block glow" type="button" data-ft-act="qsend">送る</button>
-      <div class="ft-q-nav"><button class="linklike" type="button" data-ft-act="qback">ひとつ前へ</button><button class="linklike" type="button" data-ft-act="redo">はじめから</button></div>
+      <button class="btn block glow" type="button" data-ft-act="qsend">${ed ? "この答えで送りなおす" : "送る"}</button>
+      <div class="ft-q-nav">${ed ? `<span></span><button class="linklike" type="button" data-ft-act="qcancel">なおさずにもどる</button>` : `<button class="linklike" type="button" data-ft-act="qback">ひとつ前へ</button><button class="linklike" type="button" data-ft-act="redo">はじめから</button>`}</div>
     </section>`;
   }
   const i = ftQuiz.i;
   const q = FT_QUESTIONS[i];
-  const intro = i === 0
+  const intro = i === 0 && !ed && !ftQuiz.back
     ? `<p class="ft-q-intro">5つの質問に、<b>ひとりで</b>答えてください。相手の答えは見えません。ふたりの答えから「ふたりの月」が決まります。${ft.partner.answered ? `<br><span class="ft-q-partner">${pn}さんは、もう答えました。</span>` : ""}</p>`
     : "";
+  const back = ftQuiz.back
+    ? `<button class="linklike" type="button" data-ft-act="qsum">変えずにもどる</button>`
+    : i > 0 ? `<button class="linklike" type="button" data-ft-act="qback">ひとつ前へ</button>` : "<span></span>";
   return `<section class="card ft-quiz">
     <div class="ft-q-top"><span class="ft-eyebrow">心理テスト</span><span class="ft-q-num">Q${i + 1} / ${total}</span></div>
     <div class="ft-q-dots">${dots}</div>
     ${intro}
     <h3 class="ft-q appear">${cakeEsc(q.q)}</h3>
     <div class="ft-q-opts appear">${ftOrder(i).map((k) => `<button type="button" class="ft-opt${ftQuiz.picks[i] === FT_KEYS[k] ? " on" : ""}" data-ft-pick="${FT_KEYS[k]}">${cakeEsc(q.a[k])}</button>`).join("")}</div>
-    <div class="ft-q-nav">${i > 0 ? `<button class="linklike" type="button" data-ft-act="qback">ひとつ前へ</button>` : "<span></span>"}${ft.me.answered ? `<button class="linklike" type="button" data-ft-act="qcancel">やめる</button>` : ""}</div>
+    <div class="ft-q-nav">${back}${ed && !ftQuiz.back ? `<button class="linklike" type="button" data-ft-act="qcancel">なおさずにもどる</button>` : ""}</div>
   </section>`;
+}
+
+// 答えなおし中の合図を送る（on）・止める（off）。なおしているあいだは、相手が答え終わっても、ふたりの月は決まらない
+function ftEditBeat(on) {
+  clearInterval(ftEditTimer);
+  ftEditTimer = null;
+  if (!on) return;
+  ftEditTimer = setInterval(() => {
+    if (!ftQuiz || !ftQuiz.edit || !ft || ft.type) { ftEditBeat(false); return; }
+    cakeRpc("cake_futari_answer_edit", { p_code: code, p_on: true, ...testArgs() }).catch(() => {});
+  }, 60000);
+}
+
+// 送った答えを、なおしはじめる（いまの答えから、なおしたい質問だけ）
+async function ftEditStart(btn) {
+  if (ftBusy) return;
+  ftBusy = true;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await cakeRpc("cake_futari_answer_edit", { p_code: code, p_on: true, ...testArgs() });
+    if (r && r.me) ft = r;
+    if (ft.type) { renderFutari(true); return; }
+    ftQuiz = { i: FT_QUESTIONS.length, picks: [...(ft.me.answers || [])], edit: true };
+    if (ftQuiz.picks.length !== FT_QUESTIONS.length) ftQuiz = { i: 0, picks: [], edit: true };
+    ftEditBeat(true);
+    renderFutari(true);
+  } catch (e) {
+    toast(e.message);
+    if (btn) btn.disabled = false;
+  } finally {
+    ftBusy = false;
+  }
+}
+
+// なおさずにもどる（前に送った答えのまま。相手が答え終わっていれば、ここで決まる）
+async function ftEditStop() {
+  if (ftBusy) return;
+  ftBusy = true;
+  ftEditBeat(false);
+  ftQuiz = null;
+  try {
+    const r = await cakeRpc("cake_futari_answer_edit", { p_code: code, p_on: false, ...testArgs() });
+    ftApply(r);
+    if (r && r.type) toast("ふたりの月が決まりました");
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    ftBusy = false;
+    renderFutari(true);
+  }
 }
 
 function ftPick(key) {
   if (!ftQuiz || !FT_KEYS.includes(key)) return;
   ftQuiz.picks[ftQuiz.i] = key;
-  ftQuiz.i += 1;
+  if (ftQuiz.back) { ftQuiz.i = FT_QUESTIONS.length; ftQuiz.back = false; }   // 1問だけなおしたら確認へ
+  else ftQuiz.i += 1;
   renderFutari(true);
 }
 
@@ -356,6 +422,7 @@ async function ftSendAnswers(btn) {
   try {
     const r = await cakeRpc("cake_futari_answer", { p_code: code, p_answers: ftQuiz.picks.slice(0, FT_QUESTIONS.length), ...testArgs() });
     ftQuiz = null;
+    ftEditBeat(false);
     ftApply(r);
     toast(r && r.type ? "ふたりの月が決まりました" : "答えを送りました");
     $("ftRoot").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -641,7 +708,7 @@ function ftReadyHtml() {
     <p class="ft-wait-msg center" id="ftWaitMsg"></p>
     <button class="btn block glow" type="button" id="ftOpenBtn" data-ft-act="open">ふたりで開ける</button>
     <button class="btn ghost block hidden" type="button" id="ftStopBtn" data-ft-act="stop" style="margin-top:8px">やめる</button>
-    <p class="small muted center" style="margin:10px 0 0">ふたりがそれぞれ自分のアルバムで「ふたりで開ける」を押すと、同じ時間に写真が表になります。写真とケーキは、そのときまでのお楽しみです。</p>
+    <p class="small muted center" style="margin:10px 0 0">ふたりがそれぞれ自分のアルバムで「ふたりで開ける」を押すと、同じ時間にふたりのケーキが現れます。ケーキはそのときまでのお楽しみ。ふたりの写真のアルバムは、お店でケーキを受け取ったあとに見られます。</p>
   </section>`;
 }
 
@@ -809,6 +876,11 @@ async function ftPlayReveal() {
   ftRevealing = true;
   try {
     await Promise.race([ftHydrate(box), ftSleep(6000)]);   // ケーキの画像を先に開いておく
+    // 別の画面やタブを見ているあいだは始めない（裏で終わってしまわないように、ページが見えてから流す）
+    if (document.hidden) await new Promise((ok) => {
+      const on = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", on); ok(); } };
+      document.addEventListener("visibilitychange", on);
+    });
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     await ftSleep(500);
     box.classList.remove("closed", "counting");
@@ -1218,13 +1290,17 @@ function futariInit() {
     if (z) { ftZoom(z.dataset.ftZoom); return; }
     const pick = e.target.closest("[data-ft-pick]");
     if (pick) { ftPick(pick.dataset.ftPick); return; }
+    const go = e.target.closest("[data-ft-qgo]");
+    if (go && ftQuiz) { ftQuiz.i = Number(go.dataset.ftQgo); ftQuiz.back = true; renderFutari(true); return; }
     const b = e.target.closest("[data-ft-act]");
     if (!b) return;
     const act = b.dataset.ftAct;
     if (act === "qback") ftQuizBack();
     else if (act === "qsend") ftSendAnswers(b);
-    else if (act === "redo") { ftQuiz = { i: 0, picks: [] }; renderFutari(true); }
-    else if (act === "qcancel") { ftQuiz = null; renderFutari(true); }
+    else if (act === "redo") { ftQuiz = { i: 0, picks: [], edit: Boolean(ftQuiz && ftQuiz.edit) }; renderFutari(true); }
+    else if (act === "editans") ftEditStart(b);
+    else if (act === "qcancel") ftEditStop();
+    else if (act === "qsum") { if (ftQuiz) { ftQuiz.i = FT_QUESTIONS.length; ftQuiz.back = false; } renderFutari(true); }
     else if (act === "edit") {
       ftEditSlot = Number(b.dataset.slot);
       renderFutari(true);
