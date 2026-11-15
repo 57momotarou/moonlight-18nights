@@ -457,7 +457,19 @@ function ftPhotosHtml(collapsed) {
     <p class="small ft-lock">🔒 相手の写真は、ふたりで開けるまで見えません。</p>
     <div class="ft-progress"><span>あなた <b>${ftMine()}</b> / 3</span><span>${pn}さん <b>${ftTheirs()}</b> / 3</span></div>
     <details class="ft-help"><summary>写真のURLって？</summary>
-      <p class="small">ゲームの中で写真を撮ると、写真のURL（<code>https://r2.fivemanage.com/…</code> のような文字）がコピーできます。それを下の欄にそのまま貼り付けて「貼る」を押してください。</p></details>
+      <p class="ft-help-h">ゲームの中で撮った写真</p>
+      <ol class="ft-help-steps">
+        <li>ゲームのスマホで、貼りたい写真を選ぶ</li>
+        <li>左下の<b>共有ボタン</b>を押す</li>
+        <li><b>「写真をコピー」</b>を押す → 写真のURL（<code>https://r2.fivemanage.com/…</code>）がコピーされます</li>
+      </ol>
+      <p class="ft-help-h">スクショ（パソコンで撮った画像）</p>
+      <ol class="ft-help-steps">
+        <li>Discord に画像を送る（自分あてのDMなどで大丈夫）</li>
+        <li>パソコンは、画像を右クリック →<b>「リンクをコピー」</b>。スマホは、画像を開いて右上のメニュー →<b>「メディアリンクをコピー」</b></li>
+        <li><code>https://cdn.discordapp.com/…</code> か <code>https://media.discordapp.net/…</code> で始まれば大丈夫です（「メッセージリンク」の <code>https://discord.com/channels/…</code> は貼れません）</li>
+      </ol>
+      <p class="small">コピーしたURLを下の欄にそのまま貼り付けて「貼る」を押してください。</p></details>
   </section>`;
   const cards = t.prompts.map((p, i) => ftPromptHtml(p, i)).join("");
   if (!collapsed) return head + cards;

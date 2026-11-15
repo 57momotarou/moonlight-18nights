@@ -72,6 +72,9 @@
 .ft-help{margin-top:10px;font-size:13px}
 .ft-help summary{cursor:pointer;color:var(--blue)}
 .ft-help code{font-size:12px;color:var(--gold2);word-break:break-all}
+.ft-help-h{margin:10px 0 4px;font-weight:700;color:var(--moon)}
+.ft-help-steps{margin:0 0 6px;padding-left:1.4em;display:grid;gap:4px;line-height:1.6}
+.ft-help-steps b{color:var(--gold2)}
 .ft-prompt-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
 .ft-num{flex:0 0 34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--mincho);font-weight:600;font-size:17px;color:#1a1205;background:linear-gradient(180deg,#e6c77d,#c49a45)}
 .ft-prompt.has .ft-num{box-shadow:0 0 0 3px rgba(214,179,101,.2)}
