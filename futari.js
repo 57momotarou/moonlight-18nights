@@ -465,8 +465,8 @@ function ftPhotosHtml(collapsed) {
       </ol>
       <p class="ft-help-h">スクショ（パソコンで撮った画像）</p>
       <ol class="ft-help-steps">
-        <li>Discord に画像を送る（自分あてのDMなどで大丈夫）</li>
-        <li>パソコンは、画像を右クリック →<b>「リンクをコピー」</b>。スマホは、画像を開いて右上のメニュー →<b>「メディアリンクをコピー」</b></li>
+        <li>Discord に画像を送る</li>
+        <li>送った画像の<b>「画像リンクをコピー」</b>か<b>「メディアリンクをコピー」</b>を押す</li>
         <li><code>https://cdn.discordapp.com/…</code> か <code>https://media.discordapp.net/…</code> で始まれば大丈夫です（「メッセージリンク」の <code>https://discord.com/channels/…</code> は貼れません）</li>
       </ol>
       <p class="small">コピーしたURLを下の欄にそのまま貼り付けて「貼る」を押してください。</p></details>
