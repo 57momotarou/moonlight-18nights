@@ -499,8 +499,11 @@ function imgShootingStars(ctx, W, H, seed = 1, spots = null) {
 // ---------- ケーキカード ----------
 // selfName：自分の名前（入れないときは空）／withNames：一緒の人（「with A ・ B」で入れる）
 async function makeCardImage({ visit, selfName = "", withNames = [], startDate, total, frame = "moon", shooting = false }) {
+  const purge = Boolean(visit.purge);
+  if (purge) { withNames = []; shooting = false; }
+  const purgeText = purge ? `パージの夜にひらいたカード${imgPurgeDate(visit.opened_at) ? `　${imgPurgeDate(visit.opened_at)}` : ""}` : "";
   const hasNames = Boolean(selfName) || withNames.length > 0;
-  await imgFonts(`${visit.cake}${visit.drink}${selfName}${withNames.join("")}`);
+  await imgFonts(`${visit.cake}${visit.drink}${selfName}${withNames.join("")}${purgeText}`);
   const W = 1080, H = 1350;
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
@@ -527,15 +530,16 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
   // 一緒に来た人の名前：人数が多いほど文字を小さくし、全員が入るようにケーキ画像を縮める
   let nameFs = 36, nameLines = [];
   if (withNames.length) {
-    for (nameFs of [36, 32, 28, 25, 22]) {
+    for (nameFs of [36, 32, 28, 25, 22, 19]) {
       ctx.font = `500 ${nameFs}px ${IMG_FONT}`;
       nameLines = imgWrapNames(ctx, withNames, W - 300);
-      if (nameLines.length <= (nameFs >= 32 ? 2 : nameFs >= 28 ? 3 : 5)) break;
+      if (nameLines.length <= (nameFs >= 32 ? 2 : nameFs >= 28 ? 3 : nameFs >= 22 ? 5 : 8)) break;
     }
   }
   const nameLH = Math.round(nameFs * 1.38);
   const textH = (hasNames ? 64 : 84) + 56 + (hasNames ? 40 : 0) + (selfName ? 62 : 0)
-    + (withNames.length ? (selfName ? 54 : 62) + (nameLines.length - 1) * nameLH : 0);
+    + (withNames.length ? (selfName ? 54 : 62) + (nameLines.length - 1) * nameLH : 0)
+    + (purge ? 58 : 0);
   const top = 272;
   const lastY = 1200;
   const size = Math.max(330, Math.min(hasNames ? 640 : 700, lastY - top - textH));
@@ -583,12 +587,65 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
   }
   ctx.textAlign = "center";
   await imgFooter(ctx, W, H);
+  if (purge) {
+    imgSilverize(ctx, W, H, { x: Math.floor((W - size) / 2), y: top, w: Math.ceil(size), h: Math.ceil(size) });
+    y += 58;
+    ctx.fillStyle = "#c9cfdc";
+    ctx.font = `500 26px ${IMG_FONT}`;
+    imgSpaced(ctx, purgeText, W / 2, y, 2);
+    imgPurgeMoon(ctx, W - 134, 132, 24);
+  }
   return cv;
+}
+
+// ---------- パージの夜にひらいたカード：金を銀に・紅い月 ----------
+// あたたかい色（金・クリーム色）だけを、同じ明るさの銀に変える。紺の空とケーキの写真（skip の範囲）は変えない
+function imgSilverize(ctx, W, H, skip = null) {
+  const d = ctx.getImageData(0, 0, W, H);
+  const px = d.data;
+  for (let y = 0; y < H; y++) {
+    const inY = skip && y >= skip.y && y < skip.y + skip.h;
+    for (let x = 0; x < W; x++) {
+      if (inY && x >= skip.x && x < skip.x + skip.w) continue;
+      const i = (y * W + x) * 4;
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const warm = r - b;
+      if (warm <= 6) continue;
+      const t = Math.min(1, (warm - 6) / 46);
+      const l = Math.min(255, (0.299 * r + 0.587 * g + 0.114 * b) * 1.06);
+      px[i] = r + (l * 0.96 - r) * t;
+      px[i + 1] = g + (l * 0.985 - g) * t;
+      px[i + 2] = b + (Math.min(255, l * 1.04 + 4) - b) * t;
+    }
+  }
+  ctx.putImageData(d, 0, 0);
+}
+
+function imgPurgeMoon(ctx, cx, cy, r) {
+  ctx.save();
+  ctx.shadowColor = "rgba(255,90,69,.75)";
+  ctx.shadowBlur = r * 0.9;
+  const g = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
+  g.addColorStop(0, "#ffd2c2");
+  g.addColorStop(0.55, "#f0806a");
+  g.addColorStop(1, "#b3352c");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function imgPurgeDate(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric", timeZone: "Asia/Tokyo" }).formatToParts(d);
+  const v = (k) => (p.find((x) => x.type === k) || {}).value || "";
+  return `${v("month")}.${v("day")}`;
 }
 
 // ---------- アルバム全体 ----------
 async function makeAlbumImage(album, title, { showName = true, showTitle = true, frame = "moon", shooting = false } = {}) {
-  await imgFonts(`${album.name}${title || ""}${album.visits.map((v) => v.cake).join("")}`);
+  const purge = Array.isArray(album.purge) ? album.purge : [];
+  await imgFonts(`${album.name}${title || ""}${album.visits.map((v) => v.cake).join("")}${purge.map((v) => v.cake).join("")}パージ＋`);
   const total = album.total_nights;
   const cols = 3, rows = Math.ceil(total / cols);
   const W = 1080, tileW = 286, tileH = 228, gap = 16, top = 336;
@@ -613,25 +670,28 @@ async function makeAlbumImage(album, title, { showName = true, showTitle = true,
     { text: String(count), font: `600 34px ${IMG_FONT}`, color: "#f4e7c4" },
     { text: " / ", font: `500 28px ${IMG_FONT}`, color: "#8f9ab3" },
     { text: String(total), font: `500 28px ${IMG_FONT}`, color: "#b8c1d6" },
-    { text: "  nights", font: `italic 500 30px ${IMG_EN}`, color: "#b8c1d6" }
+    { text: "  nights", font: `italic 500 30px ${IMG_EN}`, color: "#b8c1d6" },
+    ...(purge.length ? [{ text: `　パージ ＋${purge.length}`, font: `500 24px ${IMG_FONT}`, color: "#c9cfdc" }] : [])
   ], 110, 278, "left");
   imgMoon(ctx, W - 180, 204, 70, count / total);
 
   const byNight = new Map(album.visits.map((v) => [v.night, v]));
+  purge.forEach((p) => { if (!byNight.has(p.night)) byNight.set(p.night, p); });
   const x0 = (W - (cols * tileW + (cols - 1) * gap)) / 2;
   for (let n = 1; n <= total; n++) {
     const i = n - 1;
     const x = x0 + (i % cols) * (tileW + gap);
     const y = top + Math.floor(i / cols) * (tileH + gap);
     const v = byNight.get(n);
-    ctx.fillStyle = v ? "rgba(28,41,80,.85)" : "rgba(12,20,38,.75)";
-    ctx.strokeStyle = v ? "rgba(214,179,101,.6)" : "rgba(42,58,88,.9)";
+    const pg = Boolean(v && v.purge);
+    ctx.fillStyle = pg ? "rgba(38,42,54,.88)" : v ? "rgba(28,41,80,.85)" : "rgba(12,20,38,.75)";
+    ctx.strokeStyle = pg ? "rgba(201,207,220,.6)" : v ? "rgba(214,179,101,.6)" : "rgba(42,58,88,.9)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect ? ctx.roundRect(x, y, tileW, tileH, 18) : ctx.rect(x, y, tileW, tileH);
     ctx.fill(); ctx.stroke();
     imgRuns(ctx, [
-      { text: `第${imgNightKanji(n)}夜`, font: `600 22px ${IMG_FONT}`, color: v ? "#e3c886" : "#56627d" },
+      { text: `第${imgNightKanji(n)}夜`, font: `600 22px ${IMG_FONT}`, color: pg ? "#d9dee8" : v ? "#e3c886" : "#56627d" },
       { text: `  ${cakeNightDate(album.start_date, n)}`, font: `500 19px ${IMG_FONT}`, color: v ? "#aab4ca" : "#4a5570" }
     ], x + 16, y + 34, "left");
 
@@ -639,9 +699,10 @@ async function makeAlbumImage(album, title, { showName = true, showTitle = true,
       const im = await imgLoad(await cakeImageSrc(v.night));
       if (im) ctx.drawImage(im, x + (tileW - 164) / 2, y + 40, 164, 164);
       ctx.textAlign = "center";
-      ctx.fillStyle = "#f4ecd2";
+      ctx.fillStyle = pg ? "#e6eaf2" : "#f4ecd2";
       ctx.font = `500 22px ${IMG_FONT}`;
       imgCenterText(ctx, v.cake, x + tileW / 2, y + tileH - 12, tileW - 20);
+      if (pg) imgPurgeMoon(ctx, x + tileW - 22, y + 24, 8);
     } else {
       ctx.textAlign = "center";
       ctx.fillStyle = "#34405c";
@@ -745,12 +806,20 @@ async function makeSkyImage(pub) {
   g.addColorStop(0, "#050816"); g.addColorStop(1, "#0c1636");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
+  // 月（中心 0.78W・0.2H、半径120）の円にかかった星だけ置き直し、月に近いほど薄く（前は右上を四角く空けていた）
+  const mx = W * 0.78, my = H * 0.2, mr = 120;
   const shown = Math.min(pub.stars, 600);
   for (let i = 0; i < shown; i++) {
-    const x = 40 + imgRand(i + 1) * (W - 80);
-    const y = 60 + imgRand(i + 501) * (H * 0.7);
-    if (x > W * 0.6 && y < H * 0.42) continue;
-    ctx.globalAlpha = 0.5 + imgRand(i + 33) * 0.5;
+    let x, y, d, k = 0;
+    do {
+      x = 40 + imgRand(i + 1 + k * 2000) * (W - 80);
+      y = 60 + imgRand(i + 501 + k * 2000) * (H * 0.7);
+      d = Math.hypot(x - mx, y - my);
+      k++;
+    } while (d < mr + 16 && k < 6);
+    if (d < mr + 16) continue;
+    const glare = Math.min(1, (d - mr - 16) / 110);
+    ctx.globalAlpha = (0.5 + imgRand(i + 33) * 0.5) * (0.2 + 0.8 * glare);
     ctx.fillStyle = i >= pub.stars - (pub.tonight_stars || 0) ? "#ffe9a8" : "#ffffff";
     ctx.beginPath(); ctx.arc(x, y, 1.6 + imgRand(i + 901) * 2.6, 0, Math.PI * 2); ctx.fill();
   }

@@ -850,14 +850,15 @@ function ftOpenedHtml() {
 
 function ftAlbumHtml() {
   const t = ftType();
+  const people = ftBookPeople();   // 箱のラベル・本のページと同じ順（登録した順）。ふたりのどちらが見ても同じ並び
   const rows = t.prompts.map((p, i) => `<div class="ft-row">
       <div class="ft-row-title"><span>${IMG_KANJI_NUM[i + 1]}</span>${cakeEsc(p[0])}</div>
-      <div class="ft-pair">${ftFigHtml("me", i, ft.me.name, ft.me.photos[i])}${ftFigHtml("partner", i, ft.partner.name, (ft.partner.photos || [])[i])}</div>
+      <div class="ft-pair">${people.map((pp) => ftFigHtml(pp.side, i, pp.name, pp.photos[i])).join("")}</div>
     </div>`).join("");
   return `<section class="card ft-album">
     <div class="ft-eyebrow center">FUTARI NO TSUKI</div>
     <h2 class="center">ふたりの月アルバム</h2>
-    <div class="ft-album-sub center">${t.name}のふたり ・ ${cakeEsc(ft.me.name)} と ${ftPn()}</div>
+    <div class="ft-album-sub center">${t.name}のふたり ・ ${cakeEsc(people[0].name)} と ${cakeEsc(people[1].name)}</div>
     ${rows}
     ${ftKeepHtml()}
   </section>`;
@@ -968,8 +969,9 @@ async function ftMakeImage() {
   ctx.fillText(`${t.name}（${t.kana}）のふたり${day ? ` ・ ${day}` : ""}`, W / 2, 290);
   ctx.fillStyle = "#f4e7c4";
   // ふたりの名前：1行に入らなければ2行（ひとりめ ＆ / ふたりめ）にして、入る大きさまで小さくする
-  const pairText = `${me.name}  ＆  ${pa.name}`;
-  const lines = [`${me.name}  ＆`, pa.name];
+  const [p1, p2] = ftBookPeople();   // 箱のラベル・本のページと同じ順（登録した順）
+  const pairText = `${p1.name}  ＆  ${p2.name}`;
+  const lines = [`${p1.name}  ＆`, p2.name];
   let shift = 0;
   ctx.font = `600 42px ${IMG_FONT}`;
   if (ctx.measureText(pairText).width <= W - 220) {
@@ -996,7 +998,7 @@ async function ftMakeImage() {
       { text: `  ${t.prompts[i][0]}`, font: `500 30px ${IMG_FONT}`, color: "#f4ecd2" }
     ], x1 + 2, y + 32, "left");
     y += 50;
-    const cols = [["me", x1, me.name, me.photos[i]], ["partner", x2, pa.name, (pa.photos || [])[i]]];
+    const cols = [[p1.side, x1, p1.name, p1.photos[i]], [p2.side, x2, p2.name, p2.photos[i]]];
     for (const [side, x, who, p] of cols) {
       const im = await ftPhotoBitmap(side, i, p);
       ctx.save();

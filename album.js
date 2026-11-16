@@ -72,6 +72,8 @@ function paintBgStars() {
 }
 
 // ---------- 夜空（みんなの星） ----------
+const SKY_MOON = { x: 83, y: 19, r: 12 };   // 夜空の月（下の translate(68,4) scale(.3) の月の中心と半径）
+
 function renderSky() {
   if (!pub) return;
   const { stars, thresholds, stage, night, total_nights: total, start_date: start, tonight_stars: tonight } = pub;
@@ -84,15 +86,24 @@ function renderSky() {
   else badge = `🌙 第${night}夜 ${cakeNightDate(start, night)}`;
   $("nightBadge").textContent = (CAKE_TEST ? "🧪 " : "") + badge;
 
+  // 星は見えている範囲（横3〜97・縦3〜66）に置く。月（中心83,19・半径12）の円にかかった星だけ置き直し、
+  // 月に近いほど月明かりで薄く、下の文字のあたりも少し薄くする（前は右上を四角く空けていた）
   const shown = Math.min(stars, 320);
   let dots = "";
   for (let i = 0; i < shown; i++) {
-    const x = 4 + rand(i + 1) * 92;
-    const y = 6 + rand(i + 501) * 76;
-    if (x > 60 && y < 46) continue;
+    let x, y, d, k = 0;
+    do {
+      x = 3 + rand(i + 1 + k * 2000) * 94;
+      y = 3 + rand(i + 501 + k * 2000) * 63;
+      d = Math.hypot(x - SKY_MOON.x, y - SKY_MOON.y);
+      k++;
+    } while (d < SKY_MOON.r + 1.5 && k < 6);
+    if (d < SKY_MOON.r + 1.5) continue;
+    const glare = Math.min(1, (d - SKY_MOON.r - 1.5) / 10);
+    const low = y > 50 ? 1 - 0.55 * ((y - 50) / 16) : 1;
     const s = 0.35 + rand(i + 901) * 0.75;
     const isNew = i >= stars - tonight;
-    dots += `<circle class="star-dot" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${s.toFixed(2)}" fill="${isNew ? "#ffe9a8" : "#ffffff"}" opacity="${(0.55 + rand(i + 33) * 0.45).toFixed(2)}" style="animation-delay:${(rand(i + 77) * 5).toFixed(2)}s"/>`;
+    dots += `<circle class="star-dot" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${s.toFixed(2)}" fill="${isNew ? "#ffe9a8" : "#ffffff"}" opacity="${((0.55 + rand(i + 33) * 0.45) * (0.2 + 0.8 * glare) * low).toFixed(2)}" style="animation-delay:${(rand(i + 77) * 5).toFixed(2)}s"/>`;
   }
   const moon = moonSvg(stageFrac(stars, thresholds), 100, true).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
   $("sky").innerHTML = `<svg viewBox="0 0 100 69" preserveAspectRatio="xMidYMid slice">
@@ -187,6 +198,20 @@ async function loadPublic() {
 }
 
 // ---------- アルバム ----------
+// パージで開いたカード（album.purge）。来店（album.visits）とは別に持ち、証明書・フレーム・称号・流れ星には数えない
+function purgeCards() {
+  return album && Array.isArray(album.purge) ? album.purge : [];
+}
+// その夜のカード（来店 → パージの順）
+function cardOf(n) {
+  if (!album) return null;
+  return album.visits.find((x) => x.night === n) || purgeCards().find((x) => x.night === n) || null;
+}
+function purgeDateText(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", timeZone: "Asia/Tokyo" });
+}
+
 function seenKey() { return `moonlight-album-seen-${code}`; }
 function getSeen() {
   try { return new Set(JSON.parse(cakeStore(seenKey()) || "[]")); } catch { return new Set(); }
@@ -323,6 +348,8 @@ function renderAlbum() {
   const total = a.total_nights;
   const count = a.visits.length;
   const byNight = new Map(a.visits.map((v) => [v.night, v]));
+  purgeCards().forEach((p) => { if (!byNight.has(p.night)) byNight.set(p.night, p); });
+  const purgeN = purgeCards().length;
   const seen = getSeen();
 
   $("albumName").textContent = a.name;
@@ -330,7 +357,7 @@ function renderAlbum() {
   $("nameReq").innerHTML = a.name_request
     ? `名前の変更を確認中：「${cakeEsc(a.name_request.new_name)}」`
     : `<button type="button" class="linklike small" id="nameFixBtn">名前がまちがっているときは</button>`;
-  $("albumTitle").textContent = [titleFor(count), `${count} / ${total}夜`, a.maxStreak >= 2 ? `✦ 最長${a.maxStreak}夜連続` : ""].filter(Boolean).join("　・　");
+  $("albumTitle").textContent = [titleFor(count), `${count} / ${total}夜`, purgeN ? `パージ ＋${purgeN}` : "", a.maxStreak >= 2 ? `✦ 最長${a.maxStreak}夜連続` : ""].filter(Boolean).join("　・　");
   $("myMoon").innerHTML = moonSvg(count / total, 76, true);
   $("gridCard").classList.toggle("complete", count >= total);
 
@@ -339,10 +366,11 @@ function renderAlbum() {
     const v = byNight.get(n);
     const date = cakeNightDate(a.start_date, n);
     const finalCls = n === total ? " final" : "";
+    const pg = v && v.purge ? " purge" : "";
     if (v && !seen.has(n)) {
-      html += `<button class="tile sealed${finalCls}" data-open="${n}" type="button"><span class="n">第${n}夜</span><b>✉</b>開けてみる</button>`;
+      html += `<button class="tile sealed${pg}${finalCls}" data-open="${n}" type="button"><span class="n">第${n}夜</span><b>✉</b>開けてみる</button>`;
     } else if (v) {
-      html += `<button class="tile got${v.together.length ? " pair" : ""}${v.streak ? " streak" : ""}${finalCls}" data-show="${n}" type="button"><span class="n">${date}</span>
+      html += `<button class="tile got${pg}${v.together.length ? " pair" : ""}${v.streak ? " streak" : ""}${finalCls}" data-show="${n}" type="button"><span class="n">${date}</span>
         <img data-cake-night="${v.night}" alt=""><span class="t">${cakeEsc(v.cake)}</span></button>`;
     } else if (n === a.night) {
       html += `<div class="tile today${finalCls}"><span class="n">${date}</span>今夜<br>？</div>`;
@@ -353,6 +381,7 @@ function renderAlbum() {
     }
   }
   $("grid").innerHTML = html;
+  $("purgeNote").classList.toggle("hidden", !(purgeN || (a.purgeState && a.purgeState.active)));
 
   const pairs = a.visits.filter((v) => v.together.length && seen.has(v.night));
   $("pairCard").classList.toggle("hidden", !pairs.length);
@@ -392,6 +421,7 @@ function cardInfoHtml(v, n, reveal) {
   return `
     <div class="kicker">第${n}夜 ・ ${cakeNightDate(album.start_date, n)}${isFinal ? " ・ 満月の夜" : ""}</div>
     <img data-cake-night="${v.night}" alt="${cakeEsc(v.cake)}">
+    ${v.purge ? `<div class="purge-badge">パージの夜にひらいたカード${purgeDateText(v.opened_at) ? `（${purgeDateText(v.opened_at)}）` : ""}</div>` : ""}
     ${v.streak ? `<div class="streak-badge">✦ 連続来店ボーナス：流れ星</div>` : ""}
     <h3>${cakeEsc(v.cake)}</h3>
     <p class="drink">＋ ${cakeEsc(v.drink)}</p>
@@ -453,10 +483,10 @@ async function sendNameRequest() {
 }
 
 function showCard(n, reveal) {
-  const v = album?.visits.find((x) => x.night === n);
+  const v = cardOf(n);
   if (!v) return;
   saveState = null;
-  $("modalCard").className = "modal-card" + (reveal ? " reveal" : "");
+  $("modalCard").className = "modal-card" + (reveal ? " reveal" : "") + (v.purge ? " purge" : "");
   $("modalCard").innerHTML = cardInfoHtml(v, n, reveal);
   $("modalCard").dataset.night = String(n);
   $("modal").classList.remove("hidden");
@@ -466,15 +496,17 @@ function showCard(n, reveal) {
 }
 
 function openSavePanel(n) {
-  const v = album.visits.find((x) => x.night === n);
+  const v = cardOf(n);
+  if (!v) return;
   saveState = {
     night: n,
     names: [{ name: album.name, on: false }, ...v.together.map((name) => ({ name, on: true }))],
     frame: currentFrame(),
     shooting: Boolean(v.streak),
+    purge: Boolean(v.purge),
     timer: null
   };
-  $("modalCard").className = "modal-card";
+  $("modalCard").className = "modal-card" + (v.purge ? " purge" : "");
   $("modalCard").innerHTML = `
     <div class="kicker">第${n}夜の画像を保存</div>
     <div class="save-panel">
@@ -483,7 +515,7 @@ function openSavePanel(n) {
       <div class="checks" id="saveChecks"></div>
       <div class="small muted" style="margin:0 0 6px">フレーム</div>
       <div class="frames" id="saveFrames"></div>
-      <div class="checks"><label style="${hasStreak() ? "" : "opacity:.45"}"><input type="checkbox" id="saveShooting"${saveState.shooting ? " checked" : ""}${hasStreak() ? "" : " disabled"}>流れ星を入れる${hasStreak() ? "" : '<span class="small muted">（2夜続けて来ると使えます）</span>'}</label></div>
+      ${saveState.purge ? `<p class="small muted" style="margin:0 0 10px">パージの夜にひらいたカードは、銀と紅い月の画像になります。</p>` : `<div class="checks"><label style="${hasStreak() ? "" : "opacity:.45"}"><input type="checkbox" id="saveShooting"${saveState.shooting ? " checked" : ""}${hasStreak() ? "" : " disabled"}>流れ星を入れる${hasStreak() ? "" : '<span class="small muted">（2夜続けて来ると使えます）</span>'}</label></div>`}
       <div class="actions">
         <button class="btn" type="button" data-act="download">保存する</button>
         <button class="btn ghost" type="button" data-act="back">もどる</button>
@@ -508,8 +540,8 @@ function refreshPreview() {
   if (!saveState) return;
   clearTimeout(saveState.timer);
   saveState.timer = setTimeout(async () => {
-    const v = album.visits.find((x) => x.night === saveState.night);
-    const cv = await makeCardImage({ visit: v, ...chosenNames(), startDate: album.start_date, total: album.total_nights, frame: saveState.frame, shooting: saveState.shooting });
+    const v = cardOf(saveState.night);
+    const cv = await makeCardImage({ visit: v, ...chosenNames(), startDate: album.start_date, total: album.total_nights, frame: saveState.frame, shooting: saveState.shooting && !v.purge });
     const img = $("savePreview");
     if (img) img.src = cv.toDataURL("image/jpeg", 0.8);
     saveState.canvas = cv;
@@ -520,8 +552,8 @@ async function downloadCard() {
   const btn = $("modalCard").querySelector('[data-act="download"]');
   btn.disabled = true;
   try {
-    const v = album.visits.find((x) => x.night === saveState.night);
-    const cv = await makeCardImage({ visit: v, ...chosenNames(), startDate: album.start_date, total: album.total_nights, frame: saveState.frame, shooting: saveState.shooting });
+    const v = cardOf(saveState.night);
+    const cv = await makeCardImage({ visit: v, ...chosenNames(), startDate: album.start_date, total: album.total_nights, frame: saveState.frame, shooting: saveState.shooting && !v.purge });
     const r = await saveCanvas(cv, `moonlight-18nights-${String(saveState.night).padStart(2, "0")}.png`);
     if (r === "downloaded") toast("画像を保存しました");
   } catch (e) {
@@ -558,8 +590,16 @@ async function saveWhole(kind) {
 async function openAlbum(c, { quiet = false } = {}) {
   code = c;
   try {
-    album = await cakeRpc("cake_album", { p_code: c, ...testArgs() });
+    const [al, pg] = await Promise.all([
+      cakeRpc("cake_album", { p_code: c, ...testArgs() }),
+      cakeRpc("cake_purge_album", { p_code: c, ...testArgs() }).catch(() => null)
+    ]);
+    album = al;
+    const visited = new Set(album.visits.map((v) => v.night));
+    album.purge = (pg && Array.isArray(pg.cards) ? pg.cards : []).filter((p) => !visited.has(p.night));
+    album.purgeState = pg && pg.state ? pg.state : null;
     cakeSetImageCode(c);
+    cakePurgeNights = new Set(album.purge.map((p) => p.night));
     annotateStreaks(album);
     cakeStore(CODE_KEY, c);
     $("openCard").classList.add("hidden");

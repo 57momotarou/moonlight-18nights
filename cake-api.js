@@ -102,9 +102,10 @@ function cakeTestOptions(total = 18) {
 // ---- ケーキ画像（Supabase の cake_image から。見てよい人にだけ届く） ----
 const cakeImageCache = new Map();
 let cakeImageCode = "";
+let cakePurgeNights = new Set();   // パージで開いた夜（album.js が入れる）。画像は cake_purge_image から
 
 function cakeSetImageCode(code) {
-  if (code !== cakeImageCode) cakeImageCache.clear();
+  if (code !== cakeImageCode) { cakeImageCache.clear(); cakePurgeNights = new Set(); }
   cakeImageCode = code || "";
 }
 
@@ -112,7 +113,10 @@ function cakeImageSrc(night, kind = "image") {
   const key = `${kind}:${night}`;
   if (!cakeImageCache.has(key)) {
     const t = typeof cakeTestNight === "function" ? cakeTestNight() : null;
-    const p = cakeRpc("cake_image", { p_code: cakeImageCode, p_night: night, p_kind: kind, ...(t === null ? {} : { p_test_night: t }) })
+    const purge = kind === "image" && cakePurgeNights.has(Number(night));
+    const p = (purge
+      ? cakeRpc("cake_purge_image", { p_code: cakeImageCode, p_night: night, ...(t === null ? {} : { p_test_night: t }) })
+      : cakeRpc("cake_image", { p_code: cakeImageCode, p_night: night, p_kind: kind, ...(t === null ? {} : { p_test_night: t }) }))
       .then((r) => (r && r.data ? `data:${r.mime || "image/webp"};base64,${r.data}` : ""))
       .catch(() => { cakeImageCache.delete(key); return ""; });
     cakeImageCache.set(key, p);
