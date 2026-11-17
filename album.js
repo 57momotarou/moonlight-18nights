@@ -198,11 +198,12 @@ async function loadPublic() {
 }
 
 // ---------- アルバム ----------
-// パージで開いたカード（album.purge）。来店（album.visits）とは別に持ち、証明書・フレーム・称号・流れ星には数えない
+// 名残の月にひらいたカード（album.purge。最終夜に、買えなかった夜をあとから開けたもの）。
+// 来店（album.visits）とは別に持ち、証明書・フレーム・称号・流れ星には数えない
 function purgeCards() {
   return album && Array.isArray(album.purge) ? album.purge : [];
 }
-// その夜のカード（来店 → パージの順）
+// その夜のカード（来店 → 名残の月の順）
 function cardOf(n) {
   if (!album) return null;
   return album.visits.find((x) => x.night === n) || purgeCards().find((x) => x.night === n) || null;
@@ -357,7 +358,7 @@ function renderAlbum() {
   $("nameReq").innerHTML = a.name_request
     ? `名前の変更を確認中：「${cakeEsc(a.name_request.new_name)}」`
     : `<button type="button" class="linklike small" id="nameFixBtn">名前がまちがっているときは</button>`;
-  $("albumTitle").textContent = [titleFor(count), `${count} / ${total}夜`, purgeN ? `パージ ＋${purgeN}` : "", a.maxStreak >= 2 ? `✦ 最長${a.maxStreak}夜連続` : ""].filter(Boolean).join("　・　");
+  $("albumTitle").textContent = [titleFor(count), `${count} / ${total}夜`, purgeN ? `名残の月 ＋${purgeN}` : "", a.maxStreak >= 2 ? `✦ 最長${a.maxStreak}夜連続` : ""].filter(Boolean).join("　・　");
   $("myMoon").innerHTML = moonSvg(count / total, 76, true);
   $("gridCard").classList.toggle("complete", count >= total);
 
@@ -421,7 +422,7 @@ function cardInfoHtml(v, n, reveal) {
   return `
     <div class="kicker">第${n}夜 ・ ${cakeNightDate(album.start_date, n)}${isFinal ? " ・ 満月の夜" : ""}</div>
     <img data-cake-night="${v.night}" alt="${cakeEsc(v.cake)}">
-    ${v.purge ? `<div class="purge-badge">パージの夜にひらいたカード${purgeDateText(v.opened_at) ? `（${purgeDateText(v.opened_at)}）` : ""}</div>` : ""}
+    ${v.purge ? `<div class="purge-badge">名残の月にひらいたカード${purgeDateText(v.opened_at) ? `（${purgeDateText(v.opened_at)}）` : ""}</div>` : ""}
     ${v.streak ? `<div class="streak-badge">✦ 連続来店ボーナス：流れ星</div>` : ""}
     <h3>${cakeEsc(v.cake)}</h3>
     <p class="drink">＋ ${cakeEsc(v.drink)}</p>
@@ -515,7 +516,7 @@ function openSavePanel(n) {
       <div class="checks" id="saveChecks"></div>
       <div class="small muted" style="margin:0 0 6px">フレーム</div>
       <div class="frames" id="saveFrames"></div>
-      ${saveState.purge ? `<p class="small muted" style="margin:0 0 10px">パージの夜にひらいたカードは、銀と紅い月の画像になります。</p>` : `<div class="checks"><label style="${hasStreak() ? "" : "opacity:.45"}"><input type="checkbox" id="saveShooting"${saveState.shooting ? " checked" : ""}${hasStreak() ? "" : " disabled"}>流れ星を入れる${hasStreak() ? "" : '<span class="small muted">（2夜続けて来ると使えます）</span>'}</label></div>`}
+      ${saveState.purge ? `<p class="small muted" style="margin:0 0 10px">名残の月にひらいたカードは、銀の画像になります。</p>` : `<div class="checks"><label style="${hasStreak() ? "" : "opacity:.45"}"><input type="checkbox" id="saveShooting"${saveState.shooting ? " checked" : ""}${hasStreak() ? "" : " disabled"}>流れ星を入れる${hasStreak() ? "" : '<span class="small muted">（2夜続けて来ると使えます）</span>'}</label></div>`}
       <div class="actions">
         <button class="btn" type="button" data-act="download">保存する</button>
         <button class="btn ghost" type="button" data-act="back">もどる</button>

@@ -424,14 +424,12 @@ body.is-demo .tabs{top:42px}
 .brand h1{margin-top:5px}
 .brand h1 rt{font-family:inherit;font-size:9.5px;font-weight:400;letter-spacing:.06em;color:var(--muted)}
 
-/* ---------- パージデー（moonlight_purge.sql）：パージで開いたカードは銀と紅い月。受付の「パージで開ける」 ---------- */
-:root{--silver:#c9cfdc;--silver2:#e6eaf2;--purge-moon:radial-gradient(circle at 40% 36%,#ffd2c2 0%,#f0806a 52%,#b3352c 100%)}
-.purge-moon{display:inline-block;width:.8em;height:.8em;border-radius:50%;background:var(--purge-moon);box-shadow:0 0 8px rgba(255,90,69,.65);vertical-align:-.05em;margin-right:.4em}
+/* ---------- 名残の月（moonlight_purge.sql）：最終夜に、買えなかった夜をあとから開けたカードは銀。受付の「買えなかった夜を開ける」 ---------- */
+:root{--silver:#c9cfdc;--silver2:#e6eaf2}
 .tile.purge{border-color:rgba(201,207,220,.55)}
 .tile.got.purge{background:radial-gradient(circle at 50% 35%,#252a36,#0e131d 72%)}
 .tile.purge .n{color:var(--silver)}
 .tile.got.purge .t{color:var(--silver2)}
-.tile.purge::after{content:"";position:absolute;top:6px;right:7px;width:11px;height:11px;border-radius:50%;background:var(--purge-moon);box-shadow:0 0 7px rgba(255,90,69,.7);z-index:1}
 .tile.sealed.purge{border-color:var(--silver);background:linear-gradient(160deg,#2a2d35,#0e131d);color:var(--silver2);animation:purgeGlow 2.4s ease-in-out infinite}
 @keyframes purgeGlow{0%,100%{box-shadow:0 0 0 rgba(201,207,220,0)}50%{box-shadow:0 0 18px rgba(201,207,220,.4)}}
 .complete .tile.got.purge{border-color:rgba(201,207,220,.55)}
@@ -440,17 +438,12 @@ body.is-demo .tabs{top:42px}
 .modal-card.purge .kicker{color:var(--silver)}
 .modal-card.purge h3{color:var(--silver2)}
 .purge-badge{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:5px 12px;border-radius:999px;background:rgba(201,207,220,.1);border:1px solid rgba(201,207,220,.35);color:var(--silver2);font-size:12.5px}
-.purge-badge::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--purge-moon);box-shadow:0 0 6px rgba(255,90,69,.7)}
 /* 受付 */
 .purge-card{border-color:rgba(201,207,220,.4);background:linear-gradient(180deg,rgba(40,44,56,.92),rgba(17,22,34,.92))}
 .purge-card h2{color:var(--silver2)}
 .purge-pick{margin:0 0 12px}
 .purge-who{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(201,207,220,.35);background:rgba(201,207,220,.06)}
 .purge-who .tag{font-size:11px;color:var(--warn);margin-left:6px}
-.purge-auto{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
-.purge-auto .purge-n{min-width:1.6em;text-align:center;font-size:20px;color:var(--silver2);font-family:var(--mincho)}
-.purge-auto .btn.sm{min-width:40px}
-.purge-auto .muted{flex-basis:100%}
 .purge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .purge-grid .pn{display:grid;gap:1px;justify-items:center;padding:7px 2px;border-radius:12px;border:1px solid var(--line2);background:#0f1626;color:var(--text);font-size:12px;line-height:1.25}
 .purge-grid .pn small{font-size:10.5px;color:var(--muted)}
@@ -459,8 +452,11 @@ body.is-demo .tabs{top:42px}
 .purge-grid .pn.on i{color:var(--silver2);font-weight:700}
 .purge-grid .pn.has{opacity:.5}
 .purge-grid .pn.visit i{color:var(--gold2)}
-.purge-grid .pn.purge i{color:#ffb4a4}
+.purge-grid .pn.purge i{color:var(--silver2)}
 .btn.purge-btn{background:linear-gradient(180deg,#eef1f7,#b9c0cf);color:#161a24}
 .btn.purge-btn:disabled{opacity:.5}
 .purge-night{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid rgba(201,207,220,.4);color:var(--silver2);font-size:12px}
 .result .r.purge-r{border-color:rgba(201,207,220,.45);background:rgba(201,207,220,.07)}
+.purge-log{margin:14px 0 0;border-top:1px solid var(--line2);padding-top:10px}
+.purge-log summary{cursor:pointer;font-family:var(--mincho);color:#d9dee8;font-size:15px;padding:4px 0}
+.purge-log[open] summary{margin-bottom:8px}

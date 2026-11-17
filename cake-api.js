@@ -102,7 +102,7 @@ function cakeTestOptions(total = 18) {
 // ---- ケーキ画像（Supabase の cake_image から。見てよい人にだけ届く） ----
 const cakeImageCache = new Map();
 let cakeImageCode = "";
-let cakePurgeNights = new Set();   // パージで開いた夜（album.js が入れる）。画像は cake_purge_image から
+let cakePurgeNights = new Set();   // 名残の月にひらいた夜（album.js が入れる）。画像は cake_purge_image から
 
 function cakeSetImageCode(code) {
   if (code !== cakeImageCode) { cakeImageCache.clear(); cakePurgeNights = new Set(); }

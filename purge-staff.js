@@ -1,9 +1,9 @@
-// purge-staff.js — 受付の「パージで開ける」：パージの夜（11/18 17:00〜。デモは第18夜）だけ、ケーキセットのタブに出る。
-// 買えなかった夜（第1〜17夜）のカードを、ケーキセット1個につき1夜分ずつ開ける。開いたカードは銀と紅い月になり、
-// 証明書・フレーム・称号・夜空の星には数えない（SQL は docs/supabase/moonlight_purge.sql）。staff.js の start から purgeInit を呼ぶ。
+// purge-staff.js — 受付の「買えなかった夜を開ける」：名残の月（11/18 17:00〜。デモは第18夜）のあいだだけ、ケーキセットのタブに出る。
+// 買えなかった夜（第1〜17夜）のカードを、ケーキセット1個につき1夜分ずつ開ける。開いたカードは銀になり、
+// 証明書・フレーム・称号・夜空の星には数えない（SQL は docs/supabase/moonlight_purge.sql。中の名前は最初の案の purge のまま）。
+// staff.js の start から purgeInit を呼ぶ。画面に出す言葉は「名残の月」「買えなかった夜」（最初の案の名前は使わない。利用者の指定 2026-11-18）。
 "use strict";
 
-const PURGE_PRICE = 30000;
 let purgeState = null;      // cake_purge_status の結果
 let purgeRows = [];
 let purgeSug = [];
@@ -12,10 +12,6 @@ let purgeSeq = 0;
 let purgePick = null;       // { name, code, isNew, fromApp, nights: Map(夜→"visit"|"purge"), loading }
 let purgeSel = new Set();   // 開ける夜
 let purgeBusy = false;
-
-function purgeMoney(n) {
-  return `$${(n * PURGE_PRICE).toLocaleString("en-US")}`;
-}
 
 function purgeNightsText(list) {
   return list.length ? `第${list.join("・")}夜` : "";
@@ -41,13 +37,19 @@ async function purgeLoad() {
   purgeRender();
 }
 
+function purgeEndText(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("ja-JP", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Tokyo" });
+}
+
 function purgeRender() {
   const open = Boolean(purgeState && purgeState.open);
   $("purgeCard").classList.toggle("hidden", !open);
   if (!open) return;
   const st = purgeState;
-  $("purgeWhen").textContent = st.test ? "デモ・第18夜" : st.active ? "パージ中" : "パージは終わりました（記録し忘れの分）";
-  $("purgeCount").textContent = purgeRows.length ? `${purgeRows.length}枚` : "";
+  $("purgeWhen").textContent = st.test ? "デモ・第18夜" : st.active ? `${purgeEndText(st.ends_at)}まで` : "記録し忘れの分だけ";
+  $("purgeCount").textContent = purgeRows.length ? `（${purgeRows.length}）` : "";
   $("purgeList").innerHTML = purgeRows.map((r, i) => `<div class="li">
       <div><b>${cakeEsc(r.name)}</b>　<span class="purge-night">第${r.night}夜</span>
         <div class="meta">${timeText(r.opened_at)} ・ No.${cakeEsc(r.code)} ・ ${cakeEsc(r.staff || "")}</div></div>
@@ -131,7 +133,7 @@ function purgeRenderPick() {
     box.classList.add("hidden");
     box.innerHTML = "";
     btn.disabled = true;
-    btn.textContent = "パージで開ける";
+    btn.textContent = "開ける";
     return;
   }
   const p = purgePick;
@@ -141,7 +143,7 @@ function purgeRenderPick() {
   for (let n = 1; n <= purgeLastNight(); n++) {
     const kind = p.nights.get(n);
     const on = purgeSel.has(n);
-    const label = kind === "visit" ? "来店" : kind === "purge" ? "パージ済" : on ? "開ける" : "";
+    const label = kind === "visit" ? "来店" : kind === "purge" ? "開けた" : on ? "開ける" : "";
     grid += `<button type="button" class="pn${kind ? ` has ${kind}` : ""}${on ? " on" : ""}" data-pn="${n}"${kind || p.loading ? " disabled" : ""}>
       <b>第${n}夜</b><small>${start ? cakeEsc(cakeNightDate(start, n)) : ""}</small><i>${label}</i></button>`;
   }
@@ -149,24 +151,11 @@ function purgeRenderPick() {
   box.innerHTML = `<div class="purge-who"><div><b>${cakeEsc(p.name)}</b>${p.isNew ? '<span class="tag">はじめて</span>' : ` <span class="small muted">No.${cakeEsc(p.code || "")}</span>`}</div>
       <button type="button" class="linklike small" data-purge-clear="1">ほかの人にする</button></div>
     ${p.loading ? '<div class="small muted">読み込み中…</div>' : `
-    <div class="purge-auto"><span class="small">ケーキセットの個数</span>
-      <button type="button" class="btn ghost sm" data-purge-step="-1" aria-label="1個へらす"${count ? "" : " disabled"}>−</button>
-      <b class="purge-n">${count}</b>
-      <button type="button" class="btn ghost sm" data-purge-step="1" aria-label="1個ふやす"${count < free.length ? "" : " disabled"}>＋</button>
-      <span class="small muted">個数を変えると古い夜から選びます。夜を押して選び直せます</span></div>
     <div class="purge-grid">${grid}</div>
     ${free.length ? "" : '<div class="small" style="color:var(--warn)">第1〜' + purgeLastNight() + '夜は、もう全部そろっています</div>'}`}`;
   box.classList.remove("hidden");
   btn.disabled = p.loading || count === 0 || purgeBusy;
-  btn.textContent = count ? `${purgeNightsText([...purgeSel].sort((a, b) => a - b))}を開ける（ケーキセット${count}個・${purgeMoney(count)}）` : "開ける夜を選んでください";
-}
-
-// 個数を変えたら、まだ持っていない夜を古い順に選び直す
-function purgeStep(d) {
-  const free = purgeFree();
-  const n = Math.max(0, Math.min(free.length, purgeSel.size + d));
-  purgeSel = new Set(free.slice(0, n));
-  purgeRenderPick();
+  btn.textContent = count ? `${purgeNightsText([...purgeSel].sort((a, b) => a - b))}を開ける` : "開ける夜を選んでください";
 }
 
 function purgeToggle(n) {
@@ -190,13 +179,12 @@ async function purgeOpen() {
     const opened = res.opened || [];
     const skipped = res.skipped || [];
     $("purgeResult").innerHTML = `<div class="r${res.is_new ? " new" : ""} purge-r"><b>${cakeEsc(res.name)}</b>　${opened.length ? `${purgeNightsText(opened)}を開けました` : "開けた夜はありません"}
-        <div class="small">ケーキセット${opened.length}個 ・ ${purgeMoney(opened.length)}</div>
-        ${skipped.length ? `<div class="small" style="color:var(--warn)">${purgeNightsText(skipped)}はもう持っていたので、開けていません（この分の代金はいただかないでください）</div>` : ""}
+        ${skipped.length ? `<div class="small" style="color:var(--warn)">${purgeNightsText(skipped)}はもう持っていたので、開けていません</div>` : ""}
         ${res.is_new ? `<div class="code">${cakeEsc(res.code)}</div><div class="small">「アルバム番号は <b>${cakeEsc(res.code)}</b> です」と伝えてください</div>` : `<div class="small muted">アルバム番号 ${cakeEsc(res.code)}</div>`}</div>`;
     $("purgeResult").classList.remove("hidden");
     purgePick = null;
     purgeSel = new Set();
-    toast(opened.length ? "パージで開けました" : "開ける夜はありませんでした");
+    toast(opened.length ? "開けました" : "開ける夜はありませんでした");
     await purgeLoad();
   } catch (e) {
     $("purgeError").textContent = e.message;
@@ -208,7 +196,7 @@ async function purgeOpen() {
 }
 
 async function purgeUndo(r) {
-  if (!confirm(`${r.name} さんの第${r.night}夜（パージで開けた分）を取り消しますか？`)) return;
+  if (!confirm(`${r.name} さんの第${r.night}夜（あとから開けた分）を取り消しますか？`)) return;
   try {
     await cakeRpc("cake_staff_purge_undo", { p_pass: pass, p_id: r.id });
     toast("取り消しました");
@@ -255,7 +243,6 @@ function purgeInit() {
     const b = e.target.closest("button");
     if (!b || b.disabled) return;
     if (b.dataset.purgeClear) { purgePick = null; purgeSel = new Set(); purgeRenderPick(); $("purgeInput").focus(); return; }
-    if (b.dataset.purgeStep) { purgeStep(Number(b.dataset.purgeStep)); return; }
     if (b.dataset.pn) purgeToggle(Number(b.dataset.pn));
   });
   $("purgeBtn").addEventListener("click", purgeOpen);

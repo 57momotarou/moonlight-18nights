@@ -7,8 +7,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ケーキ受付 | Moonlight</title>
 <link rel="icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="album.css?v=51">
-<link rel="stylesheet" href="futari.css?v=51">
+<link rel="stylesheet" href="album.css?v=52">
+<link rel="stylesheet" href="futari.css?v=52">
 </head>
 <body class="staff">
 <main class="wrap">
@@ -66,27 +66,25 @@
     </nav>
 
     <div data-desk-panel="cake">
-    <!-- パージの夜（11/18 17:00〜。デモは第18夜）だけ出る -->
+    <!-- 名残の月（11/18 17:00〜。デモは第18夜）のあいだだけ出る -->
     <section class="card purge-card hidden" id="purgeCard">
-      <div class="topline" style="margin-bottom:6px">
-        <h2 style="margin:0"><span class="purge-moon" aria-hidden="true"></span>パージで開ける</h2>
+      <div class="topline" style="margin-bottom:8px">
+        <h2 style="margin:0">買えなかった夜を開ける</h2>
         <span class="small muted" id="purgeWhen"></span>
       </div>
-      <p class="small muted" style="margin:0 0 10px">買えなかった夜（第1〜17夜）のカードを、<b>ケーキセット1個につき1夜分</b>開けます。開いたカードは銀と紅い月になり、証明書・フレーム・称号・夜空の星には数えません。<br><b>その夜に本当に買っていた人</b>（記録し忘れ・予約）は、ここではなく下の「ケーキセットを渡したら記録」でその夜を選んでください。</p>
       <div class="field">
         <label for="purgeInput">お客さんの名前か4桁の番号</label>
         <input type="text" id="purgeInput" maxlength="40" autocomplete="off" enterkeyhint="done">
         <div class="suggest" id="purgeSuggest"></div>
       </div>
       <div class="purge-pick hidden" id="purgePickBox"></div>
-      <button class="btn block purge-btn" type="button" id="purgeBtn" disabled>パージで開ける</button>
+      <button class="btn block purge-btn" type="button" id="purgeBtn" disabled>開ける</button>
       <p class="error" id="purgeError"></p>
       <div class="result hidden" id="purgeResult"></div>
-      <div class="topline" style="margin:14px 0 6px">
-        <h3 style="margin:0;font-family:var(--mincho);color:#d9dee8">パージで開けた記録</h3>
-        <span class="small muted" id="purgeCount"></span>
-      </div>
-      <div class="list" id="purgeList"></div>
+      <details class="purge-log" id="purgeLog">
+        <summary>開けた記録 <span class="small muted" id="purgeCount"></span></summary>
+        <div class="list" id="purgeList"></div>
+      </details>
     </section>
 
     <section class="card">
@@ -180,9 +178,9 @@
 <div class="toast hidden" id="toast"></div>
 
 <script src="config.js"></script>
-<script src="cake-api.js?v=51"></script>
-<script src="futari-staff.js?v=51"></script>
-<script src="purge-staff.js?v=51"></script>
-<script src="staff.js?v=51"></script>
+<script src="cake-api.js?v=52"></script>
+<script src="futari-staff.js?v=52"></script>
+<script src="purge-staff.js?v=52"></script>
+<script src="staff.js?v=52"></script>
 </body>
 </html>

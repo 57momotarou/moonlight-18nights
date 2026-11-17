@@ -501,7 +501,7 @@ function imgShootingStars(ctx, W, H, seed = 1, spots = null) {
 async function makeCardImage({ visit, selfName = "", withNames = [], startDate, total, frame = "moon", shooting = false }) {
   const purge = Boolean(visit.purge);
   if (purge) { withNames = []; shooting = false; }
-  const purgeText = purge ? `パージの夜にひらいたカード${imgPurgeDate(visit.opened_at) ? `　${imgPurgeDate(visit.opened_at)}` : ""}` : "";
+  const purgeText = purge ? `名残の月にひらいたカード${imgPurgeDate(visit.opened_at) ? `　${imgPurgeDate(visit.opened_at)}` : ""}` : "";
   const hasNames = Boolean(selfName) || withNames.length > 0;
   await imgFonts(`${visit.cake}${visit.drink}${selfName}${withNames.join("")}${purgeText}`);
   const W = 1080, H = 1350;
@@ -593,12 +593,11 @@ async function makeCardImage({ visit, selfName = "", withNames = [], startDate, 
     ctx.fillStyle = "#c9cfdc";
     ctx.font = `500 26px ${IMG_FONT}`;
     imgSpaced(ctx, purgeText, W / 2, y, 2);
-    imgPurgeMoon(ctx, W - 134, 132, 24);
   }
   return cv;
 }
 
-// ---------- パージの夜にひらいたカード：金を銀に・紅い月 ----------
+// ---------- 名残の月にひらいたカード（最終夜に、買えなかった夜をあとから開けたもの）：金を銀に ----------
 // あたたかい色（金・クリーム色）だけを、同じ明るさの銀に変える。紺の空とケーキの写真（skip の範囲）は変えない
 function imgSilverize(ctx, W, H, skip = null) {
   const d = ctx.getImageData(0, 0, W, H);
@@ -621,19 +620,6 @@ function imgSilverize(ctx, W, H, skip = null) {
   ctx.putImageData(d, 0, 0);
 }
 
-function imgPurgeMoon(ctx, cx, cy, r) {
-  ctx.save();
-  ctx.shadowColor = "rgba(255,90,69,.75)";
-  ctx.shadowBlur = r * 0.9;
-  const g = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
-  g.addColorStop(0, "#ffd2c2");
-  g.addColorStop(0.55, "#f0806a");
-  g.addColorStop(1, "#b3352c");
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-
 function imgPurgeDate(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -645,7 +631,7 @@ function imgPurgeDate(iso) {
 // ---------- アルバム全体 ----------
 async function makeAlbumImage(album, title, { showName = true, showTitle = true, frame = "moon", shooting = false } = {}) {
   const purge = Array.isArray(album.purge) ? album.purge : [];
-  await imgFonts(`${album.name}${title || ""}${album.visits.map((v) => v.cake).join("")}${purge.map((v) => v.cake).join("")}パージ＋`);
+  await imgFonts(`${album.name}${title || ""}${album.visits.map((v) => v.cake).join("")}${purge.map((v) => v.cake).join("")}名残の月＋`);
   const total = album.total_nights;
   const cols = 3, rows = Math.ceil(total / cols);
   const W = 1080, tileW = 286, tileH = 228, gap = 16, top = 336;
@@ -671,7 +657,7 @@ async function makeAlbumImage(album, title, { showName = true, showTitle = true,
     { text: " / ", font: `500 28px ${IMG_FONT}`, color: "#8f9ab3" },
     { text: String(total), font: `500 28px ${IMG_FONT}`, color: "#b8c1d6" },
     { text: "  nights", font: `italic 500 30px ${IMG_EN}`, color: "#b8c1d6" },
-    ...(purge.length ? [{ text: `　パージ ＋${purge.length}`, font: `500 24px ${IMG_FONT}`, color: "#c9cfdc" }] : [])
+    ...(purge.length ? [{ text: `　名残の月 ＋${purge.length}`, font: `500 24px ${IMG_FONT}`, color: "#c9cfdc" }] : [])
   ], 110, 278, "left");
   imgMoon(ctx, W - 180, 204, 70, count / total);
 
@@ -702,7 +688,6 @@ async function makeAlbumImage(album, title, { showName = true, showTitle = true,
       ctx.fillStyle = pg ? "#e6eaf2" : "#f4ecd2";
       ctx.font = `500 22px ${IMG_FONT}`;
       imgCenterText(ctx, v.cake, x + tileW / 2, y + tileH - 12, tileW - 20);
-      if (pg) imgPurgeMoon(ctx, x + tileW - 22, y + 24, 8);
     } else {
       ctx.textAlign = "center";
       ctx.fillStyle = "#34405c";
